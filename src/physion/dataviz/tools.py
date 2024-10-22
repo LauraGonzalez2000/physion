@@ -52,12 +52,15 @@ def plot_scaled_signal(data,
             color=color, lw=1)
 
     if scale_side=='left':
-        tscale, side = shifted_start(tlim), 'right'
+        print("hello left")
+        print("tscale is supposed to be ", shifted_start(tlim) )
+        tscale, side = shifted_start(tlim), 'left'   #was the opposite
     if scale_side=='right':
-        tscale, side = shifted_stop(tlim), 'left'
+        print("hello right")
+        print("tscale is supposed to be ", shifted_start(tlim) )
+        tscale, side = shifted_stop(tlim), 'right'  #was the opposite
 
-    print("hello")
-    print(tscale)
+    
     # add scale bar
     if scale_side!='':
         ax.plot(tscale*np.ones(2),
