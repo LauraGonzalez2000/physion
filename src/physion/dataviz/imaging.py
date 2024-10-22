@@ -163,6 +163,36 @@ def add_CaImagingSum(data, tlim, ax,
                             scale_unit_string=('%.0fdF/F' if subquantity in ['dF/F', 'dFoF'] else ''))
     dv_tools.add_name_annotation(data, ax, name, tlim, fig_fraction, fig_fraction_start, color=color)
 
+
+
+def add_CaImaging_mean(data, tlim, ax,
+                     fig_fraction_start=0., fig_fraction=1., color='green',
+                     subquantity='Fluorescence', subsampling=1,
+                     name='Mean [Ca]'):
+    
+    if (subquantity in ['dF/F', 'dFoF']) and (not hasattr(data, 'dFoF')):
+        data.build_dFoF()
+        
+    i1, i2 = dv_tools.convert_times_to_indices(*tlim, data.Neuropil, axis=1)
+    t = np.array(data.Neuropil.timestamps[:])[np.arange(i1,i2)][::subsampling]
+    
+    if (subquantity in ['dF/F', 'dFoF']):
+        y = data.dFoF.mean(axis=0)[np.arange(i1,i2)][::subsampling]
+    else:
+        y = data.rawFluo.mean(axis=0)[np.arange(i1,i2)][::subsampling]
+
+    
+    '''
+    dv_tools.plot_scaled_signal(data, ax, t, y, tlim, 1., fig_fraction, fig_fraction_start, color=color,
+                            scale_unit_string=('%.0fdF/F' if subquantity in ['dF/F', 'dFoF'] else ''))
+    '''#not adding something for the scale_side was creating bugs (before fig_fraction) SOFIA
+    
+    dv_tools.plot_scaled_signal(data, ax, t, y, tlim, 1., 'left', fig_fraction, fig_fraction_start, color=color,
+                            scale_unit_string=('%.0fdF/F' if subquantity in ['dF/F', 'dFoF'] else ''))
+
+    dv_tools.add_name_annotation(data, ax, name, tlim, fig_fraction, fig_fraction_start, color=color)
+
+
 ###-------------------------------------
 ### ----- IMAGING PLOT components -----
 ###-------------------------------------
