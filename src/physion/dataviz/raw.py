@@ -256,6 +256,7 @@ def plot(data,
          figsize=(9,6), 
          Tbar=0., zoom_area=None,
          ax=None):
+    print("hello")
 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
