@@ -56,6 +56,8 @@ def plot_scaled_signal(data,
     if scale_side=='right':
         tscale, side = shifted_stop(tlim), 'left'
 
+    print("hello")
+    print(tscale)
     # add scale bar
     if scale_side!='':
         ax.plot(tscale*np.ones(2),
