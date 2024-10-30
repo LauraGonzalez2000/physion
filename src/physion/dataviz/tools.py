@@ -52,9 +52,9 @@ def plot_scaled_signal(data,
             color=color, lw=1)
 
     if scale_side=='left':
-        tscale, side = shifted_start(tlim), 'left'   #was the opposite before
+        tscale, side = shifted_start(tlim), 'left'   #was the opposite before SOFIA
     if scale_side=='right':
-        tscale, side = shifted_stop(tlim), 'right'  #was the opposite before
+        tscale, side = shifted_stop(tlim), 'right'  #was the opposite before SOFIA
 
     
     # add scale bar
