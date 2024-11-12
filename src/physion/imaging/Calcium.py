@@ -114,9 +114,14 @@ def compute_F0(data, F,
                                        with_smoothing=True)
 
     elif method=='sliding_percentile':
-        return compute_sliding_percentile(F, percentile,
+        F0 = compute_sliding_percentile(F, percentile,
                                           int(sliding_window/data.CaImaging_dt),
                                           with_smoothing=True)
+        #import matplotlib
+        #plt.plot(F0[roi,:])
+        #plt.show()
+        return F0
+
 
     else:
         print('\n --- method not recognized --- \n ')
@@ -212,3 +217,15 @@ def compute_dFoF(data,
         print('-> dFoF calculus done !  (calculation took %.1fs)' % (time.time()-tick))
 
     return None
+
+if __name__=='__main__':
+
+    import os
+    import physion
+    base_path = os.path.join(os.path.expanduser('~'), 'Desktop', 'NWBs')
+    filename = os.path.join(base_path, '2024_10_11-17-26-55.nwb')
+    data = physion.analysis.read_NWB.Data(filename)
+    data.build_dFoF()
+    print(3)
+
+
