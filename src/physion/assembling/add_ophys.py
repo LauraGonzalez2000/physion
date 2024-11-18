@@ -276,7 +276,7 @@ def add_ophys(nwbfile, args,
         metadata = ast.literal_eval(nwbfile.session_description)
 
     try:
-        CaFn = get_files_with_extension(args.imaging, extension='.xml')[0]# get Tseries metadata
+        CaFn = get_files_with_extension(args.imaging, extension='.xml')[-1]# get Tseries metadata  ##do something clean 
     except BaseException as be:
         print(be)
         print('\n [!!]  Problem with the CA-IMAGING data in %s  [!!] ' % args.imaging)

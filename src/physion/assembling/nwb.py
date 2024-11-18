@@ -539,7 +539,7 @@ def build_NWB_func(args):
     #################################################
     # see: add_ophys.py script
     # look for 'TSeries' folder 
-    TSeries = [f for f in os.listdir(args.datafolder) if 'TSeries' in f]
+    TSeries = [f for f in os.listdir(args.datafolder) if 'TSeries' in f and '._' not in f]
     if len(TSeries)==1:
         args.imaging = os.path.join(args.datafolder, TSeries[0])
 
@@ -657,8 +657,23 @@ if __name__=='__main__':
     # if os.path.isdir(args.datafolder) and ('NIdaq.npy' in os.listdir(args.datafolder)):
     if args.recursive:
         for f, _, __ in os.walk(args.datafolder):
+        #for f, _, __ in os.walk(os.path.join(args.datafolder)):
+
+            #print("args.datafolder", os.path.join(args.datafolder))
+            
+            #print("f", f)
+            #print("_", _)
+            #print("__", __)
+
             timeFolder = f.split(os.path.sep)[-1]
+            #timeFolder = os.path.basename(f)
+            print("timeFolder", timeFolder)
+
+            
             dateFolder = f.split(os.path.sep)[-2]
+            print("dateFolder", dateFolder)
+
+
             if (len(timeFolder.split('-'))==3) and \
                     (len(dateFolder.split('_'))==3):
                 print(' processing "%s" [...] ' % f)
