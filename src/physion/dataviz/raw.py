@@ -13,7 +13,9 @@ def add_Photodiode(data, tlim, ax,
                    fig_fraction_start=0., fig_fraction=1.,
                    subsampling=10,
                    color='#808080',
-                   name='photodiode'):
+                   name='photodiode', 
+                   state ='both', 
+                   threshold = 0.5):
     i1, i2 = dv_tools.convert_times_to_indices(*tlim, data.nwbfile.acquisition['Photodiode-Signal'])
     t = dv_tools.convert_index_to_time(range(i1,i2),
             data.nwbfile.acquisition['Photodiode-Signal'])[::subsampling]
@@ -30,7 +32,9 @@ def add_Photodiode(data, tlim, ax,
 def add_Electrophy(data, tlim, ax,
                    fig_fraction_start=0., fig_fraction=1., subsampling=2, color='k',
                    scale_side='left',
-                   name='LFP'):
+                   name='LFP', 
+                   state ='both', 
+                   threshold = 0.5):
     i1, i2 = dv_tools.convert_times_to_indices(*tlim,
             data.nwbfile.acquisition['Electrophysiological-Signal'])
     t = dv_tools.convert_index_to_time(range(i1,i2),
@@ -46,25 +50,59 @@ def add_Electrophy(data, tlim, ax,
             fig_fraction, fig_fraction_start, color=color)
 
 
-def add_Locomotion(data, tlim, ax,
-                   fig_fraction_start=0., fig_fraction=1., subsampling=2,
+def add_Locomotion(data, 
+                   tlim, 
+                   ax,
+                   fig_fraction_start=0., 
+                   fig_fraction=1., 
+                   subsampling=2,
                    speed_scale_bar=1, # cm/s
                    scale_side='left',
-                   color='#1f77b4', name='run. speed'):
+                   color='#1f77b4', 
+                   name='run. speed',
+                   state ='both',
+                   threshold = 0.5):  ####modif!
+    
+
 
     if not hasattr(data, 'running_speed'):
         data.build_running_speed()
 
     i1, i2 = dv_tools.convert_times_to_indices(*tlim,
             data.nwbfile.acquisition['Running-Speed'])
-    x, y = data.t_running_speed[i1:i2][::subsampling], data.running_speed[i1:i2][::subsampling]
 
-    dv_tools.plot_scaled_signal(data, ax, x, y,
+    x, y = data.t_running_speed[i1:i2][::subsampling], data.running_speed[i1:i2][::subsampling]
+    print("in locomotion ",y)
+    print("len locomotion x",len(x))
+    print("len locomotion y", len(y))
+    print("Indices 1 and 2 of time and sumbsampling Locomotion", i1," , ", i2, " , ", subsampling)
+
+    threshold_cond = (y>=threshold)
+    print("threshold cond", threshold_cond)
+    print("len threshold cond", len(threshold_cond))
+
+
+
+
+
+
+    if state == 'running':
+        x_, y_ = x[threshold_cond], y[threshold_cond]
+    elif state == 'resting':
+        x_, y_ = x[~threshold_cond], y[~threshold_cond]
+    elif state == 'both':
+        x_, y_ = x, y 
+
+    #print("len x_",len(x_))
+    #print("len y_", len(y_))
+
+    dv_tools.plot_scaled_signal(data, ax, x_, y_,
                                 tlim, speed_scale_bar,
                                 ax_fraction_extent=fig_fraction,
                                 ax_fraction_start=fig_fraction_start,
                                 scale_side=scale_side,
                                 color=color, scale_unit_string='%icm/s')
+ 
     dv_tools.add_name_annotation(data, ax, name, tlim,
             fig_fraction, fig_fraction_start, color=color)
 
@@ -73,7 +111,9 @@ def add_Pupil(data, tlim, ax,
               fig_fraction_start=0., fig_fraction=1., subsampling=2,
               pupil_scale_bar = 0.2, # scale bar in mm
               scale_side='left',
-              color='red', name='pupil diam.'):
+              color='red', name='pupil diam.', 
+              state ='both', 
+                threshold = 0.5):
 
     i1, i2 = dv_tools.convert_times_to_indices(*tlim,
             data.nwbfile.processing['Pupil'].data_interfaces['cx'])
@@ -96,7 +136,9 @@ def add_GazeMovement(data, tlim, ax,
                      fig_fraction_start=0., fig_fraction=1., subsampling=2,
                      gaze_scale_bar = 0.1, # scale bar in mm
                      scale_side='left',
-                     color='#ff7f0e', name='gaze mov.'):
+                     color='#ff7f0e', name='gaze mov.', 
+                     state ='both', 
+                     threshold = 0.5):
 
     if not hasattr(data, 'gaze_movement'):
         data.build_gaze_movement()
@@ -117,7 +159,10 @@ def add_GazeMovement(data, tlim, ax,
 
 def add_FaceMotion(data, tlim, ax,
                    scale_side='left',
-                   fig_fraction_start=0., fig_fraction=1., subsampling=2, color='#9467bd', name='facemotion'):
+                   fig_fraction_start=0., fig_fraction=1., subsampling=2, color='#9467bd', name='facemotion', state ='both',
+                   threshold = 0.5):
+
+    
 
     if not hasattr(data, 'facemotion'):
         data.build_facemotion()
@@ -126,6 +171,11 @@ def add_FaceMotion(data, tlim, ax,
             data.nwbfile.processing['FaceMotion'].data_interfaces['face-motion'])
 
     x, y = data.t_facemotion[i1:i2][::subsampling], data.facemotion[i1:i2][::subsampling]
+
+    print("len x Facemotion",len(x))
+    print("len y Facemotion", len(y))
+    print("Indices 1 and 2 of time and sumbsampling Facemotion", i1," , ", i2, " , ", subsampling)
+
 
     dv_tools.plot_scaled_signal(data, ax, x, y, tlim, 1.,
                                 ax_fraction_extent=fig_fraction,
@@ -140,7 +190,9 @@ def add_FaceMotion(data, tlim, ax,
 def add_VisualStim(data, tlim, ax,
                    fig_fraction_start=0., fig_fraction=0.05, size=0.1,
                    with_screen_inset=True,
-                   color='k', name='visual stim.'):
+                   color='k', name='visual stim.', 
+                   state ='both', 
+                   threshold = 0.5):
 
     if with_screen_inset and (data.visual_stim is None):
         data.init_visual_stim()
@@ -255,7 +307,9 @@ def plot(data,
          settings = {},
          figsize=(9,6), 
          Tbar=0., zoom_area=None,
-         ax=None):
+         ax=None, 
+         state='both',
+         threshold = 0.5):
 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -269,8 +323,9 @@ def plot(data,
         settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
         fstart += settings[key]['fig_fraction']
 
+    
     for key in settings:
-        exec('add_%s(data, tlim, ax, **settings[key])' % key)
+        exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
 
     # time scale bar
     if Tbar==0.:

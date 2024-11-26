@@ -47,8 +47,10 @@ def plot_scaled_signal(data,
         scale_range = scale_bar
         min_signal = 0
 
+    signal_to_plot = ax_fraction_start+(signal-min_signal)*ax_fraction_extent/scale_range
+    
     ax.plot(t,
-            ax_fraction_start+(signal-min_signal)*ax_fraction_extent/scale_range,
+            signal_to_plot,  
             color=color, lw=1)
 
     if scale_side=='left':

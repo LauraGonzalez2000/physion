@@ -98,7 +98,9 @@ def add_CaImaging(data, tlim, ax,
                   vicinity_factor=1, 
                   subsampling=1, 
                   name='[Ca] imaging',
-                  annotation_side='left'):
+                  annotation_side='left', 
+                  state='both',
+                  threshold=0.5):
 
     if (subquantity in ['dF/F', 'dFoF']) and (not hasattr(data, 'dFoF')):
         data.build_dFoF(**dFoF_args)
