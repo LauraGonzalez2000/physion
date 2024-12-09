@@ -307,9 +307,9 @@ def plot(data,
          settings = {},
          figsize=(9,6), 
          Tbar=0., zoom_area=None,
-         ax=None, 
-         state='both',
-         threshold = 0.5):
+         ax=None): #, 
+         #state='both',
+         #threshold = 0.5):
 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -325,7 +325,8 @@ def plot(data,
 
     
     for key in settings:
-        exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
+        exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
+        #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
 
     # time scale bar
     if Tbar==0.:
