@@ -56,10 +56,10 @@ def NWB_to_dataframe(nwbfile,
             data.build_dFoF(specific_time_sampling=time,
                             interpolation='linear',
                             verbose=verbose)
+        #vRois
+        dataframe.nROIs = data.nROIs
 
-        dataframe.vNrois = data.vNrois
-
-        for i in range(data.vNrois):
+        for i in range(data.nROIs):
 
             if ('dFoF' in normalize) or (normalize=='all'):
                 dataframe['dFoF-ROI%i'%i] = Normalize(data.dFoF[i,:])
@@ -247,19 +247,22 @@ def NWB_to_dataframe(nwbfile,
 
 ############################################################################
 
-def build_stim_specific_array(data, index_cond, time, 
-                              normalize=False):
-
+def build_stim_specific_array(data, 
+                              index_cond, 
+                              time, 
+                              normalize=False):  #check if correct
+    
     array = np.zeros(len(time), dtype=bool)
 
     # looping over all repeats of this index
     for i in np.flatnonzero(index_cond):
 
         if i<data.nwbfile.stimulus['time_start_realigned'].num_samples:
-            tstart = data.nwbfile.stimulus['time_start_realigned'].data[i]
-            tstop = data.nwbfile.stimulus['time_stop_realigned'].data[i]
-
+            tstart = data.nwbfile.stimulus['time_start_realigned'].data[i,0]
+            tstop = data.nwbfile.stimulus['time_stop_realigned'].data[i,0]
+            #time
             t_cond = (time>=tstart) & (time<tstop)
+            #array[t_cond] 
             array[t_cond] = True
 
     # TO BE FIXED
@@ -267,6 +270,7 @@ def build_stim_specific_array(data, index_cond, time,
         # return Normalize(np.array(array, dtype=float))
     # else:
         # return array
+    
     return array
 
 
