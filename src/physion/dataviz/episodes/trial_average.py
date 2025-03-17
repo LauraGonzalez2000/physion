@@ -119,7 +119,6 @@ def plot(episodes,
     for irow, row_cond in enumerate(ROW_CONDS):
         for icol, col_cond in enumerate(COL_CONDS):
             for icolor, color_cond in enumerate(COLOR_CONDS):
-
                 cond = np.array(condition & col_cond & row_cond & color_cond)
 
                 my = response[cond,:,:].mean(axis=(0,1))
