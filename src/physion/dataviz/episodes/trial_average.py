@@ -46,6 +46,8 @@ def plot(episodes,
         - "Zscore-per-roi"
         - "minmax-per-roi"
     """
+
+    print("heyyyyyyy")
     if with_std:
         with_std_over_trials = True # for backward compatibility --- DEPRECATED you need to specify !!
 
@@ -260,10 +262,12 @@ def plot(episodes,
         # AX[0][0].annotate(S, (0,0), color='k', ha='left', va='bottom', size='small',
                 # xycoords='figure fraction')
 
+    print("holaaa")
+
     return fig, AX
 
-
-def plot_test(episodes,
+'''
+def plot2(episodes,
            # episodes props
            quantity='dFoF', roiIndex=None, roiIndices='all',
            norm='',
@@ -511,6 +515,8 @@ def plot_test(episodes,
                 # xycoords='figure fraction')
 
     return fig, AX
+'''
+
 
 
 if __name__=='__main__':
