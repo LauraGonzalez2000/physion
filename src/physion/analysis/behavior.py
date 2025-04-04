@@ -4,7 +4,8 @@ from physion.analysis.read_NWB import Data
 from physion.utils import plot_tools as pt
 
 
-def compute_high_movement_cond(episodes, running_speed_threshold):
+def compute_high_movement_cond(episodes, 
+                               running_speed_threshold):
     """
     Calculates wether the episodes are active/aroused or resting/calm.
 
