@@ -4,41 +4,6 @@ from physion.analysis.read_NWB import Data
 from physion.utils import plot_tools as pt
 
 
-def compute_high_movement_cond(episodes, 
-                               running_speed_threshold):
-    """
-    Calculates wether the episodes are active/aroused or resting/calm.
-
-    Args:
-        episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
-        running_speed_threshold (float): The threshold to discriminate resting state and active state.
-
-    Returns:
-        np.array : HMcond is True when active and false when resting
-    """
- 
-    if running_speed_threshold is not None:
-        run_speed_bool = (episodes.running_speed > running_speed_threshold)  
-        
-        HMcond = []
-        prop_thresh = 0.75*len(run_speed_bool[0]) #if 75% values during stimulation are above 0.1, then the animal is "active"
-        
-        for i in range(len(run_speed_bool)):
-            if np.sum(run_speed_bool[i])> prop_thresh:  
-                HMcond.append(True)
-            else: 
-                HMcond.append(False)
-                
-        HMcond = np.array(HMcond) 
-
-    else: 
-        print("running_speed_threshold not given")
-    
-    return HMcond
-
-
-
-
 def population_analysis(FILES,
                         min_time_minutes=2,
                         exclude_subjects=[],
@@ -82,3 +47,35 @@ def population_analysis(FILES,
         ax.annotate(s, (1+i, ymax), rotation=90, color=pt.plt.cm.tab10(c%10), xycoords='data')
         i+=np.sum(s_cond)+1
     return fig, ax
+
+def compute(episodes, 
+                               running_speed_threshold):
+    """
+    Calculates wether the episodes are active/aroused or resting/calm.
+
+    Args:
+        episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
+        running_speed_threshold (float): The threshold to discriminate resting state and active state.
+
+    Returns:
+        np.array : HMcond is True when active and false when resting
+    """
+ 
+    if running_speed_threshold is not None:
+        run_speed_bool = (episodes.running_speed > running_speed_threshold)  
+        
+        HMcond = []
+        prop_thresh = 0.75*len(run_speed_bool[0]) #if 75% values during stimulation are above 0.1, then the animal is "active"
+        
+        for i in range(len(run_speed_bool)):
+            if np.sum(run_speed_bool[i])> prop_thresh:  
+                HMcond.append(True)
+            else: 
+                HMcond.append(False)
+                
+        HMcond = np.array(HMcond) 
+
+    else: 
+        print("running_speed_threshold not given")
+    
+    return HMcond
