@@ -47,7 +47,6 @@ def plot(episodes,
         - "minmax-per-roi"
     """
 
-    print("heyyyyyyy")
     if with_std:
         with_std_over_trials = True # for backward compatibility --- DEPRECATED you need to specify !!
 
@@ -262,7 +261,6 @@ def plot(episodes,
         # AX[0][0].annotate(S, (0,0), color='k', ha='left', va='bottom', size='small',
                 # xycoords='figure fraction')
 
-    print("holaaa")
 
     return fig, AX
 
