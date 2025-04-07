@@ -26,34 +26,46 @@ import numpy as np
 
 # %%
 
-def compute_high_movement_cond(episodes, running_speed_threshold):
+def compute_high_movement_cond(episodes, 
+                               pupil_threshold = 0.29, 
+                               running_speed_threshold = 0.1, 
+                               metric = None):
     """
     Calculates wether the episodes are active or resting.
 
     Args:
         episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
+        pupil_threshold (float) : The threshold to discriminate calm state and aroused state
         running_speed_threshold (float): The threshold to discriminate resting state and active state.
+        metric (string) : metric used to split calm/rest and aroused/active states. ("pupil" or "locomotion")
 
     Returns:
         np.array : HMcond is True when active and false when resting
     """
- 
-    if running_speed_threshold is not None:
-        run_speed_bool = (episodes.running_speed > running_speed_threshold)  
-        
-        HMcond = []
-        prop_thresh = 0.75*len(run_speed_bool[0]) #if 75% values during stimulation are above 0.1, then the animal is "active"
-        
-        for i in range(len(run_speed_bool)):
-            if np.sum(run_speed_bool[i])> prop_thresh:  
-                HMcond.append(True)
-            else: 
-                HMcond.append(False)
-                
-        HMcond = np.array(HMcond) 
-
-    else: 
-        print("running_speed_threshold not given")
+    cond = []
     
-    return HMcond
+    if metric=="pupil":
+        if pupil_threshold is not None:
+            cond = (episodes.pupil_diameter.mean(axis=1)>pupil_threshold)
+        else:
+            print("pupil_threshold not given")
+    
+    if metric=="locomotion":
+        
+        if running_speed_threshold is not None:
+            run_speed_bool = (episodes.running_speed > running_speed_threshold)  
+            prop_thresh = 0.75*len(run_speed_bool[0]) #if 75% values during stimulation are above 0.1, then the animal is "active"
+            
+            for i in range(len(run_speed_bool)):
+                if np.sum(run_speed_bool[i])>= prop_thresh:  
+                    cond.append(True)
+                else: 
+                    cond.append(False)
+                    
+            cond = np.array(cond) 
+    
+        else: 
+            print("running_speed_threshold not given")
+
+    return cond
 # %%
