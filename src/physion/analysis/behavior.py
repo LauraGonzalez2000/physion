@@ -48,8 +48,7 @@ def population_analysis(FILES,
         i+=np.sum(s_cond)+1
     return fig, ax
 
-def compute(episodes, 
-                               running_speed_threshold):
+def compute(episodes, running_speed_threshold):
     """
     Calculates wether the episodes are active/aroused or resting/calm.
 
