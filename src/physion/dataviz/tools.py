@@ -35,7 +35,8 @@ def plot_scaled_signal(data,
                        tlim, scale_bar,
                        scale_side='left',
                        ax_fraction_extent=1, ax_fraction_start=0,
-                       color='#1f77b4', scale_unit_string='%.1f'):
+                       color='#1f77b4', scale_unit_string='%.1f',
+                       lw=1.0):
     """
     # generic function to add scaled signal
     """
@@ -51,7 +52,7 @@ def plot_scaled_signal(data,
     
     ax.plot(t,
             signal_to_plot,  
-            color=color, lw=1)
+            color=color, lw=lw)
 
     if scale_side=='left':
         tscale, side = shifted_start(tlim), 'left'   #was the opposite before SOFIA

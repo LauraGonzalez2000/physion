@@ -38,7 +38,7 @@ class CameraData:
                 os.path.join(self.folder, '%s-imgs' % name))\
                 and not force_video:
             """
-            load from set of *.npy frames
+            ## load from set of *.npy frames ##
             """
             if verbose:
                 print(' - loading camera data from raw image frames')
@@ -48,10 +48,11 @@ class CameraData:
                     self.Ly, self.Lx = load_FaceCamera_data(\
                                 os.path.join(self.folder, '%s-imgs' % name),
                                                 t0=0, verbose=verbose)
+            self.original_times = self.times
 
             if verbose:
-                print('- loaded Camera data with %i frames' % self.nFrames)
-                print('- frame rate', np.mean(1./np.diff(self.times)))
+                print('     - loaded Camera data with %i frames' % self.nFrames)
+                print('     - frame rate', np.mean(1./np.diff(self.times)))
                 # print(self.nFrames/(self.times[-1]-self.times[0]))
 
         elif np.sum([\
@@ -59,7 +60,7 @@ class CameraData:
                      os.path.join(self.folder, '%s.%s' % (name,f)))\
                             for f in video_formats]):
             """
-            load from movie
+            ## load from movie ##
             """
             i0 = np.flatnonzero([\
                             os.path.isfile(\
@@ -69,32 +70,36 @@ class CameraData:
             video_name = '%s.%s' % (name, video_formats[i0])
 
             if verbose:
-                print(' - loading camera data from movie ')
+                print('     - loading camera data from movie ')
                 print('                         --> ', video_name)
 
             self.cap  = cv.VideoCapture(os.path.join(self.folder, video_name))
-            nFrames = int(self.cap.get(cv.CAP_PROP_FRAME_COUNT))
-
-            # # to read directly in grey scale (not working)
-            # try:
-                # possible = self.cap.set(cv.CAP_PROP_MODE, cv.CAP_MODE_GRAY)
-            # except AttributeError:
-                # pass
+            # number of camera frames doesn't match 
+            self.nFrames_movie = int(self.cap.get(cv.CAP_PROP_FRAME_COUNT))
 
             summary = np.load(os.path.join(self.folder, '%s-summary.npy' % name),
                               allow_pickle=True).item()
             for key in summary:
                 setattr(self, key, summary[key])
 
-            if nFrames!=self.nFrames:
-                print('movie: ', nFrames, ', raw images:', self.nFrames)
-                print(' [!!] different number of frames in video and raw images')
-                self.FILES = [None for n in range(nFrames)]
-                self.times = np.linspace(self.times[0], self.times[-1], nFrames)
-                self.nFrames = nFrames
+            self.original_times = self.times
+
+            if hasattr(self, 'nframes'):
+                self.nFrames = self.nframes # old typo
 
             if verbose:
-                print('loaded Camera data with %i frames' % self.nFrames)
+                print('     - loaded Camera data with %i frames (original: %i frames)'\
+                        % (self.nFrames_movie, self.nFrames))
+
+            if False: # to debug
+                print(' ------------------------------------------------------------ ')
+                print(' [!!] different number of frames in video and raw images [!!] ')
+                print('           movie: ', self.nFrames_movie, ', raw images:', self.nFrames)
+                print('   this is due to the FPS precision in the movie, see:')
+                print('        * movie FPS      : %.3f ' % self.cap.get(cv.CAP_PROP_FPS))
+                print('        real acquisition : %.3f' % ( 1./np.diff(self.times).mean()))
+                print('             ->> forcing data to %i frames ' % self.nFrames)
+                print(' ------------------------------------------------------------ ')
 
         elif 'TSeries' in name:
 
@@ -131,6 +136,7 @@ class CameraData:
             summary = np.load(os.path.join(self.folder, '%s-summary.npy' % name),
                               allow_pickle=True).item()
 
+            self.original_times = summary['times']
             self.nFrames = len(summary['sample_frames'])
             self.times = summary['times'][summary['sample_frames_index']]
             self.FRAMES = summary['sample_frames'] 
@@ -144,7 +150,23 @@ class CameraData:
     def get(self, index):
 
         if self.cap is not None:
-            self.cap.set(cv.CAP_PROP_POS_FRAMES, index-1)
+            # ---------------------------------------------
+            #     transform to movie index (movies have low fps precision)
+            # 
+            movie_index = round(1.0* index\
+                    /self.nFrames*self.nFrames_movie)
+            if movie_index<0:
+                print('movie index: ', movie_index, 
+                      ' outside the range [0,%i]'%(self.nFrames_movie-1))
+                movie_index = 0
+            if movie_index>=self.nFrames_movie:
+                print('movie index: ', movie_index, 
+                      ' outside the range [0,%i]'%(self.nFrames_movie-1))
+                movie_index = self.nFrames_movie-1
+            # 
+            # ---------------------------------------------
+            # 
+            self.cap.set(cv.CAP_PROP_POS_FRAMES, movie_index)
             res, frame = self.cap.read()
             if res:
                 return np.array(frame[:,:,0]).T
@@ -168,8 +190,8 @@ class CameraData:
 
         if self.FILES is not None:
             """ we can build a movie """
-            nframes = len(self.FILES)
-            movie_rate = nframes/(self.times[-1]-self.times[0])
+            nFrames = len(self.FILES)
+            movie_rate = nFrames/(self.times[-1]-self.times[0])
 
             Format = 'wmv' if ('win32' in sys.platform) else 'mp4'
             out = cv.VideoWriter(\
@@ -190,7 +212,7 @@ class CameraData:
                                                '%s-imgs' % self.name, 
                                                f))
                     out.write(np.array(img, dtype=dtype))
-                    printProgressBar(i, nframes)
+                    printProgressBar(i, nFrames)
                     success[i] = True
                 except BaseException as be:
                     print(be)
@@ -201,7 +223,7 @@ class CameraData:
             np.save(os.path.join(self.folder, '%s-summary.npy' % self.name),
                     {'times':self.times,
                      'FILES':self.FILES,
-                     'nframes':nframes,
+                     'nFrames':nFrames,
                      'resolution':(self.Lx, self.Ly),
                      'movie_rate':movie_rate,
                      'Frames_succesfully_in_movie':success})

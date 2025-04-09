@@ -2,19 +2,32 @@
 
 > *installation instructions on an experimental setup*
 
+> *so far tested in Windows 10 and Windows 11, Need to use `Python 3.10`*
+
+Executables and drivers are stored in the following [drive folder](https://drive.google.com/drive/folders/1z_9GERKwQc6SKhsBnSZh-2scl_wdgHQs?usp=drive_link)
+
 ## A) Set up the `python` environment
 
-### A.1) Download and install the `miniconda` distribution
+### A.1) Install the `miniforge` distribution
 
-Download and install the `miniconda` environmment following the [installation instructions](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html)
+Run the executable: `Miniforge3-Windows-x86_64.exe` (available at this [link](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe))
+
+With the following settings:
+- Install it in the location: `~/miniforge3`
+- Add python to your path
 
 ### A.2) Create the `acquisition` environment
 
 ```
+cd work/physion/docs/install
 conda env create -n acquisition -f acquisition.yml
 ```
 
-N.B. uninstall and re-install `psychopy` with `pip` to get the latest version
+### A.3) Install other useful packages
+
+```
+conda install git vim
+```
 
 ## B) NI DAQ setup
 
@@ -22,11 +35,13 @@ N.B. uninstall and re-install `psychopy` with `pip` to get the latest version
 
 That's usually a necessary step. Download `vc_redist.x64.exe` from the [Microsoft Website](https://learn.microsoft.com/fr-fr/cpp/windows/latest-supported-vc-redist?view=msvc-170) and install it.
 
+Permanent link to [vc_redist.x64.exe](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+
 ### B.2) Install the NIDAQ MX drivers
 
 Download and install the NIDAQ MX dirvers from the [National Instruments website](https://www.ni.com/fr/support/downloads/drivers/download.ni-daq-mx.html)
 
-## C) Screen Setup & Psychopy setup
+## C) Screen Setup 
 
 ### C.1) Display Settings on Windows
 
@@ -42,21 +57,6 @@ Set the visual stimulation screen as the second monitor
 
 - Hide the taskbar on the non-primary display
 
-### C.3) Test the `psychopy` module for visual stimulation
-
-```
-cd %UserProfile%\work\physion\src\physion\visual_stim & python psychopy_test.py
-```
-### C.3) Test the `psychopy` module for visual stimulation
-
-- Basic `psychopy` test:
-    ```
-    cd %UserProfile%\work\physion\src\physion\visual_stim & python psychopy_test.py
-    ```
-- Test of the `visual_stim` class of `physion`:
-    ```
-    python -m src.visual_stim.main
-    ```
 
 ## D) FLIR Camera setup
 
@@ -95,7 +95,7 @@ Run the `test.py` script to make sure the camera runs fine:
 cd %UserProfile%\work\physion\src\physion\hardware\FLIRcamera & python test.py
 ```
 
-## E) Intrinsic Imaging Camera setup
+## E) Thorlabs Imaging Camera setup
 
 ### E.1) Install `ThorCam` 
 
@@ -128,21 +128,46 @@ into the folder:
 src/physion/hardware/Thorlabs/camera_dlls.
 ```
 
-### E.4) Test the camera
+## F) QImaging Rolera Camera setup
+
+### F.1) Install MicroManager
+
+Download and execute the [installer from the MicroManager website](https://micro-manager.org/Download_Micro-Manager_Latest_Release)
+
+Choose the 64-bit version. Current Version is `2.0.0`
+
+### F.2) Configure the Camera
+
+[...]
+
+### F.3) Install `pycromanager`
 
 ```
-conda activate acquisition
-cd %USERPROFILE%\work\physion\src\physion\hardware\Thorlabs
-python cam_test.py
+pip install pycromanager
 ```
 
-## F) Create Windows Launchers
+### F.4) Run test
+
+Setup test:
+```
+python -m physion.harware.QCamera.camera_core_test
+```
+
+Frame rate test:
+```
+python -m physion.harware.QCamera.camera_core_test
+```
+
+N.B.  [!!] `MicroManager` needs to be running to access the camera via the API
+
+
+## G) Create Windows Launchers
 
 Create Windows shortcut to launch the Acquisition and Analysis programs.
 
 On the desktop, right click -> `New` -> `Shortcut` and modigy its `Properties as follows: 
 
-### F.1) Analysis Program
+### G.1) Analysis Program
 
 - Target:
   ```
@@ -153,11 +178,11 @@ On the desktop, right click -> `New` -> `Shortcut` and modigy its `Properties as
   %UserProfile%\work\physion\src
   ```
 
-### F.2) Acquisition Program
+### G.2) Acquisition Program
 
 - Target:
   ```
-  %SystemRoot%\System32\cmd.exe /D /S /K %UserProfile%\miniconda3\Scripts\activate.bat %UserProfile%\miniconda3\envs\acquisition & python -m physion acquisition
+  %SystemRoot%\System32\cmd.exe /D /S /K %UserProfile%\miniforge3\Scripts\activate.bat %UserProfile%\miniforge3\envs\acquisition & python -m physion acquisition
   ```
 - Start in:
   ```

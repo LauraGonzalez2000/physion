@@ -15,20 +15,15 @@ from physion.visual_stim.main import visual_stim, init_bg_image
 ##  ----    STIMULUS TEMPLATE    --- #####
 ##########################################
 
-params = {"movie_refresh_freq":2,
-          # default param values:
-          "presentation-duration":3,
-          "size (deg)":4.,
-          "radius (deg)":40.,
-          "ndots (#)":7,
-          "dotcolor (lum.)":-1,
-          "bg-color (lum.)":0.5,
-          # now we set the range of possible values:
-          "size-1": 0.01, "size-2": 100, "N-size": 0,
-          "radius-1": 0.001, "radius-2": 100, "N-radius": 0,
-          "ndots-1": 1, "ndots-2": 1000, "N-ndots": 0,
-          "bg-color-1": 0., "bg-color-2": 1., "N-bg-color": 0,
-          "dotcolor-1": -1, "dotcolor-2": 1, "N-dotcolor": 0}
+params = {\
+      # default param values:
+      "presentation-duration":3,
+      "size":4.,
+      "radius":40.,
+      "ndots":7,
+      "dotcolor":-1,
+      "bg-color":0.5,
+}
     
 
 class stim(visual_stim):
@@ -41,12 +36,9 @@ class stim(visual_stim):
 
     def __init__(self, protocol):
 
-        super().__init__(protocol,
-                         keys=['radius', 'bg-color', 'ndots',
-                               'size', 'dotcolor', 'seed'])
+        super().__init__(protocol, params)
 
         self.refresh_freq = protocol['movie_refresh_freq']
-
 
     def get_image(self, index,
                   time_from_episode_start=0,
@@ -89,3 +81,26 @@ class stim(visual_stim):
         # ax = self.show_frame(episode, tcenter, ax=ax,
                              # parent=parent,
                              # label=label)
+
+if __name__=='__main__':
+
+    from physion.visual_stim.build import get_default_params
+
+    params = get_default_params('template')
+    params['radius'] = 20.
+    params['speed'] = 2.
+    params['angle-surround'] = 90.
+    params['radius-surround'] = 50.
+    params['speed-surround'] = 2.
+
+    import time
+    import cv2 as cv
+
+    Stim = stim(params)
+
+    t0 = time.time()
+    while True:
+        cv.imshow("Video Output", 
+                  Stim.get_image(0, time_from_episode_start=time.time()-t0).T)
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break

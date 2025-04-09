@@ -1,6 +1,6 @@
 [project]
 name = "physion"
-version = "1.2"
+version = "1.2.1"
 authors = [
   { name="Yann Zerlaut", email="yann.zerlaut@gmail.com" },
 ]
@@ -24,8 +24,8 @@ dependencies = [
     "pyqt5.sip",
     "pyqtgraph",
     "pyqtdarktheme",
-    "opencv-python",
-    "opencv-contrib-python",
+    "opencv-python-headless",
+    "opencv-contrib-python-headless",
     "ffmpeg-python",
     "pyqt5",
     "openpyxl",
