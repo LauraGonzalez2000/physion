@@ -90,7 +90,7 @@ def plot_behavior_in_episodes(data,
     return fig, ax
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_dFoF_locomotion_all(all_episodes, 
                          all_HMcond, 
                          roi_n=None, 
@@ -165,7 +165,7 @@ def plot_dFoF_locomotion_all(all_episodes,
     return 0
 
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 def plot_average_visually_evoked_activity(data,
                                            roiIndex=None,
                                            pupil_threshold=2.9,
@@ -275,7 +275,7 @@ def plot_average_visually_evoked_activity(data,
     return fig
 
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 def plot_average_visually_evoked_activity_(data,
                                            roiIndex=None,
                                            spe_episode = None,
@@ -391,7 +391,7 @@ def plot_average_visually_evoked_activity_(data,
     return fig
 
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 def plot_average_visually_evoked_activity_NDNF(data,
                                            roiIndex=None,
                                            pupil_threshold=2.9,
@@ -574,7 +574,7 @@ data = Data(filename,
             verbose=False)
 data.build_dFoF(verbose=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 pupil_threshold = 2.9
 fig, ax = plot_behavior_in_episodes(data, pupil_threshold=pupil_threshold, metric="pupil")
 ax.set_title('behavior across \n visual stimulation episodes')
@@ -582,7 +582,7 @@ ax.annotate('\n high arousal', (1, 1), color='orangered', xycoords='axes fractio
 ax.annotate(' low arousal', (1, 1), color='grey', xycoords='axes fraction', va='top')
 ax.axvline(x = pupil_threshold, color = 'black', label = 'threshold')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 running_speed_threshold=0.1
 pupil_threshold = 2.9
 fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, metric="locomotion")
@@ -591,7 +591,7 @@ ax.annotate('\n high arousal', (1, 1), color='orangered', xycoords='axes fractio
 ax.annotate(' low arousal', (1, 1), color='grey', xycoords='axes fraction', va='top')
 ax.axhline(running_speed_threshold, color = 'black', label = 'threshold')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -606,7 +606,7 @@ for f, filename in enumerate(SESSIONS['files']):
 for i in range(rows*cols-len(SESSIONS['files'])):
     AX[-1][i*(-1) - 1].axis('off')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -639,34 +639,34 @@ STAT_TEST['random-dots']['interval_post'] = [1.5, 2.5]
 STAT_TEST['static-patch']['interval_post'] = [0.5, 1.5]
 
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 dataIndex, roiIndex = 0, 3
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
 fig = plot_average_visually_evoked_activity_NDNF(data, roiIndex=roiIndex, pupil_threshold=2.9, running_speed_threshold=0.1, metric='locomotion')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 dataIndex, roiIndex = 2, 1
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
 #fig = plot_average_visually_evoked_activity(data, roiIndex=roiIndex, pupil_threshold=2.9)
 fig = plot_average_visually_evoked_activity_NDNF(data, roiIndex=roiIndex, pupil_threshold=2.9, running_speed_threshold=0.1, metric='locomotion')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 dataIndex, roiIndex = 7, 3
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
 #fig = plot_average_visually_evoked_activity(data, roiIndex=roiIndex, pupil_threshold=2.9)
 fig = plot_average_visually_evoked_activity_NDNF(data, roiIndex=roiIndex, pupil_threshold=2.9, running_speed_threshold=0.1, metric='locomotion')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 dataIndex, roiIndex = 7, None
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
 #fig = plot_average_visually_evoked_activity(data, roiIndex=roiIndex, pupil_threshold=2.9)
 fig = plot_average_visually_evoked_activity_NDNF(data, roiIndex=roiIndex, pupil_threshold=2.9, running_speed_threshold=0.1, metric='locomotion')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %%
 ep = EpisodeData(data,
                  prestim_duration=0,
                  protocol_id=0,
@@ -680,7 +680,7 @@ HMcond = compute_high_movement_cond(ep,
 # %% [markdown]
 # ### Specific ROI, specific episode
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17
 epi_num = random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  
 
@@ -696,7 +696,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Specific ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
 
 plot_dFoF_locomotion(ep, 
@@ -707,7 +707,7 @@ plot_dFoF_locomotion(ep,
                      active=False, 
                      resting=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=roi, 
@@ -716,7 +716,7 @@ plot_dFoF_locomotion(ep,
                      active=True, 
                      resting=True)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=roi, 
@@ -728,7 +728,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=None, 
@@ -737,7 +737,7 @@ plot_dFoF_locomotion(ep,
                      active=False, 
                      resting=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=None, 
@@ -746,7 +746,7 @@ plot_dFoF_locomotion(ep,
                      active=True, 
                      resting=True)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=None, 
@@ -758,7 +758,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### ALL files, average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 all_ep = []
 all_HMcond = []
 
@@ -777,7 +777,7 @@ for dataIndex in range(len(SESSIONS['files'])):
                                     metric = 'locomotion')
     all_HMcond.append(HMcond)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion_all(all_ep, 
                          all_HMcond, 
                          roi_n=None, 
@@ -792,12 +792,12 @@ plot_dFoF_locomotion_all(all_ep,
 # %% [markdown]
 # # SST Keta vs Saline Cibele and Sofia 2024-2025
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','my_experiments','All_NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 dataIndex = 4
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
@@ -805,13 +805,13 @@ data.build_running_speed()
 #print(data.pupil_diameter.shape)
 print(data.running_speed.shape)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %%
 fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=0.1, metric='locomotion')
 ax.set_title('behavior across \n visual stimulation episodes')
 ax.annotate('\n high arousal', (1, 1), color='orangered', xycoords='axes fraction', va='top')
 ax.annotate(' low arousal', (1, 1), color='grey', xycoords='axes fraction', va='top')
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %%
 rows = 4
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -829,7 +829,7 @@ for f, filename in enumerate(SESSIONS['files']):
 for i in range(rows*cols-len(SESSIONS['files'])):
     AX[-1][i*(-1) - 1].axis('off')
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 ep = EpisodeData(data,
                  prestim_duration=0,
                  protocol_id=0,
@@ -843,7 +843,7 @@ HMcond = compute_high_movement_cond(ep,
 # %% [markdown]
 # ### Specific ROI, specific episode
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17
 epi_num = random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  
 
@@ -859,7 +859,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Specific ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
 
 plot_dFoF_locomotion(ep, 
@@ -870,7 +870,7 @@ plot_dFoF_locomotion(ep,
                      active=False, 
                      resting=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=roi, 
@@ -879,7 +879,7 @@ plot_dFoF_locomotion(ep,
                      active=True, 
                      resting=True)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=roi, 
@@ -891,7 +891,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=None, 
@@ -909,7 +909,7 @@ plot_dFoF_locomotion(ep,
                      active=True, 
                      resting=True)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"source_hidden": true}
 plot_dFoF_locomotion(ep, 
                      HMcond, 
                      roi_n=None, 
@@ -921,7 +921,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### ALL files, average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 all_ep = []
 all_HMcond = []
 
@@ -942,7 +942,7 @@ for dataIndex in range(len(SESSIONS['files'])):
 
 all_HMcond = np.concatenate(all_HMcond)
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 print(f"{len(SESSIONS['files'])} files")
 
 plot_dFoF_locomotion_all(all_ep, 
