@@ -28,6 +28,10 @@ import sys, pathlib, os, itertools
 import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
+from physion.analysis.process_NWB import EpisodeData
+
+sys.path.append('../scripts')
+from distinct_rest_vs_active import compute_high_movement_cond
 
 sys.path.append('../../src')
 from sklearn.model_selection import train_test_split
@@ -39,44 +43,36 @@ sys.path.append('../../src/physion/analysis')
 from cross_validation import TwoFold_train_test_split_basic
 from cross_validation import TwoFold_train_test_split
 
-
 # %%
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
-filename = os.path.join(datafolder, '2022_12_14-13-27-41.nwb') #for example
+filename = os.path.join(datafolder, '2022_12_15-18-13-25.nwb') #for example
 data = Data(filename)
+
+episodes = EpisodeData(data, 
+                       quantities=['dFoF', 'Pupil', 'Running-Speed'],
+                       protocol_name='moving-dots',
+                       prestim_duration=0,
+                       verbose=False)
+
+HMcond = compute_high_movement_cond(episodes, pupil_threshold=2.9, running_speed_threshold=0.1, metric="locomotion")
+
 df = NWB_to_dataframe(filename,
                       normalize=['dFoF', 'Pupil-diameter', 'Running-Speed', 'Whisking'],
                       visual_stim_label='per-protocol-and-parameters',
                       verbose=False)
 
 # %%
-from physion.analysis.process_NWB import EpisodeData
+fig = plt.figure(figsize=(2, 1))
+plt.plot(episodes.pupil_diameter.mean(axis=1)[~HMcond],
+         episodes.running_speed.mean(axis=1)[~HMcond], 'o', color='grey')
 
-def compute_high_movement_cond(behav_episodes,
-                               running_speed_threshold):
-    # HMcond: high movement condition
-    if running_speed_threshold is not None:
-        HMcond = (behav_episodes.running_speed.mean(axis=1)>running_speed_threshold) 
-    return HMcond
-
-behav_episodes = EpisodeData(data, 
-                             quantities=['Pupil', 'Running-Speed'],
-                             #protocol_name=protocol,
-                             prestim_duration=0,
-                             verbose=False)
-        
-# HMcond: high movement condition
-HMcond = compute_high_movement_cond(behav_episodes, running_speed_threshold=0.1)
-fig = plt.figure(figsize=(5, 4))
-plt.plot(behav_episodes.pupil_diameter.mean(axis=1)[~HMcond],
-        behav_episodes.running_speed.mean(axis=1)[~HMcond], 'o', color='tab:blue')
-plt.plot(behav_episodes.pupil_diameter.mean(axis=1)[HMcond],
-        behav_episodes.running_speed.mean(axis=1)[HMcond], 'o', color='tab:orange')
+plt.plot(episodes.pupil_diameter.mean(axis=1)[HMcond],
+         episodes.running_speed.mean(axis=1)[HMcond], 'o', color='orangered')
 
 
 # %%
 cvIndices = TwoFold_train_test_split_basic(df, spont_act_key='VisStim_grey-10min')
-#print(cvIndices)
+print(cvIndices)
 
 # Plot
 fig, ax = plt.subplots(figsize=(7,2))
