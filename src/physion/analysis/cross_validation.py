@@ -19,7 +19,7 @@ def TwoFold_train_test_split(filename, data, df, spont_act_key='VisStim_grey-10m
     ###################################
     # Compute running activity
     running_dFoF_sampled = data.build_running_speed(specific_time_sampling=df['time'].values)  
-    HMcond_elongated = pd.Series((running_dFoF_sampled >= 0.60).astype(bool)) 
+    HMcond_elongated = pd.Series((running_dFoF_sampled >= 0.60).astype(bool)) #######check this!!!
 
     ###################################
     # First: Split spontaneous activity

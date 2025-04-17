@@ -606,7 +606,7 @@ fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_
 # %% [markdown]
 # ### Specific ROI, specific episode
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 roi = 65 #random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17
 epi_num = 34 #random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  #34 is active
 
@@ -622,7 +622,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Specific episode, average ROI
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"outputs_hidden": true}
 epi_num = random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  
 
 plot_dFoF_locomotion(ep, 
