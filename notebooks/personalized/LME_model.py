@@ -121,7 +121,7 @@ for dataIndex in range(len(SESSIONS['files'])):
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
     all_HMcond.append(HMcond)
-    
+
 
 # %%
 plot_dFoF_locomotion_all(all_ep, 
@@ -215,7 +215,7 @@ result_mlm = model_mlm.fit()
 print(result_mlm.summary())
 
 # %%
-df_test["predicted_dFoF"] = result_mlm.predict(df_test)
+df_test["_mlm_predicted_dFoF"] = result_mlm.predict(df_test)
 
 # %% [markdown]
 # Linear regression
@@ -241,7 +241,7 @@ df_test["lr_predicted_dFoF"] = model_lr.predict(df_test["running_speed"].values.
 # %%
 from sklearn.metrics import mean_squared_error
 
-mse = mean_squared_error(df_test["dFoF_meanROIs"], df_test["predicted_dFoF"])
+mse = mean_squared_error(df_test["dFoF_meanROIs"], df_test["mlm_predicted_dFoF"])
 rmse = np.sqrt(mse)
 
 print("MSE:", mse)
@@ -260,7 +260,7 @@ print("RMSE:", rmse)
 # %% jupyter={"outputs_hidden": true}
 from sklearn.metrics import r2_score
 
-r2 = r2_score(df_test["dFoF_meanROIs"], df_test["predicted_dFoF"])
+r2 = r2_score(df_test["dFoF_meanROIs"], df_test["mlm_predicted_dFoF"])
 print("Mixed linear model R² Score:", r2)
 
 
@@ -272,7 +272,7 @@ print(f"Linear regression R²: {r2:.3f}")
 # ### Correlation (Pearson) Between True and Predicted
 
 # %%
-corr = np.corrcoef(df_test["dFoF_meanROIs"], df_test["predicted_dFoF"])[0, 1]
+corr = np.corrcoef(df_test["dFoF_meanROIs"], df_test["mlm_predicted_dFoF"])[0, 1]
 print("Correlation (Pearson):", corr)
 
 # %%
@@ -284,7 +284,7 @@ print("Correlation (Pearson):", corr)
 
 # %%
 plt.figure(figsize=(3, 3))
-plt.scatter(df_test["dFoF_meanROIs"], df_test["predicted_dFoF"])
+plt.scatter(df_test["dFoF_meanROIs"], df_test["mlm_predicted_dFoF"])
 plt.plot([0, 10], [0, 10], 'r--')
 plt.xlabel('True Values dFoF')
 plt.ylabel('Predictions dFoF')
