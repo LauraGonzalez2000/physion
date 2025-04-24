@@ -31,13 +31,13 @@ from physion.utils import plot_tools as pt
 from physion.analysis import tools
 
 sys.path.append('../scripts')
-from distinct_rest_vs_active import compute_high_movement_cond
+from distinct_rest_vs_active import compute_high_arousal_cond
 
 import random
 from matplotlib.ticker import MultipleLocator
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_behavior_in_episodes(data,
                               ax=None,
                               running_speed_threshold=0.1,
@@ -58,10 +58,10 @@ def plot_behavior_in_episodes(data,
         try:
             
             behav_episodes = EpisodeData(data, 
-                                 quantities=['dFoF', 'Pupil', 'Running-Speed'],
-                                 protocol_name=protocol,
-                                 prestim_duration=0,
-                                 verbose=False)
+                                         quantities=['dFoF', 'Pupil', 'Running-Speed'],
+                                         protocol_name=protocol,
+                                         prestim_duration=0,
+                                         verbose=False)
         except:
             try: 
                 behav_episodes = EpisodeData(data, 
@@ -74,7 +74,7 @@ def plot_behavior_in_episodes(data,
 
         
         # HAcond: high arousal condition
-        HAcond = compute_high_movement_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric=metric)
+        HAcond = compute_high_arousal_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric=metric)
 
         ax.scatter(behav_episodes.pupil_diameter.mean(axis=1)[~HAcond],
                    behav_episodes.running_speed.mean(axis=1)[~HAcond],
@@ -141,7 +141,7 @@ def plot_average_visually_evoked_activity_NDNF(data,
                              verbose=False)
         
         # HMcond: high movement condition
-        HMcond = compute_high_movement_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric=metric)
+        HMcond = compute_high_arousal_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric=metric)
         
         episodes = EpisodeData(data,
                                quantities=['dFoF'],
@@ -255,7 +255,7 @@ def plot_average_visually_evoked_activity(data,
 
     
     
-    HMcond = compute_high_movement_cond(episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
+    HMcond = compute_high_arousal_cond(episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
     #HMcond = compute_high_movement_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
 
     
@@ -371,7 +371,7 @@ def plot_average_visually_evoked_activity_(data,
     
         
         
-        HMcond = compute_high_movement_cond(episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
+        HMcond = compute_high_arousal_cond(episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
         #HMcond = compute_high_movement_cond(behav_episodes, pupil_threshold, running_speed_threshold, metric="locomotion")
     
         
@@ -439,6 +439,86 @@ def plot_average_visually_evoked_activity_(data,
     return fig
 
 
+# %%
+def plot_locomotion(episodes, 
+                    HMcond, 
+                    episode_n = None, 
+                    general=True, 
+                    active=True, 
+                    resting=True):
+
+    fig, AX = plt.subplots(1, 1, figsize=(4, 2)) 
+    fig.subplots_adjust(hspace=0.8)
+    
+    start = int(1000)
+    end = int(start + episodes.time_duration[0]*1000)
+    #start_ = 0
+    #end_ = int(episodes.time_duration[0]*1000)
+    start_sec = 0
+    end_sec = int(episodes.time_duration[0])
+    print("start :", start)
+    print("end: ", end)
+    
+    if episode_n is None: #average of all episodes 
+        print(f"average of {episodes.dFoF.shape[0]} episodes ({np.sum(HMcond)} active, {len(HMcond)-np.sum(HMcond)} resting)")
+         
+        if general:
+            AX.plot(episodes.t, episodes.running_speed[:, :].mean(axis=0), color='blue')
+            value = episodes.running_speed[:, start:end].mean(axis=0).mean(axis=0)
+            AX.hlines(value,
+                      xmin = start_sec,
+                      xmax = end_sec,
+                      color='dimgray',
+                      linestyle=':')
+            print("value to compare to threshold : ", value)
+        
+        if active: 
+            AX.plot(episodes.t, episodes.running_speed[HMcond, :].mean(axis=0), color="orangered")
+            value = episodes.running_speed[HMcond, start:end].mean(axis=0).mean(axis=0)
+            AX.hlines(value,
+                      xmin = start_sec,
+                      xmax = end_sec,
+                      color='dimgray',
+                      linestyle=':')
+            print("value to compare to threshold : ", value)
+            
+        if resting: 
+            AX.plot(episodes.t, episodes.running_speed[~HMcond, :].mean(axis=0), color = "grey")
+            value = episodes.running_speed[~HMcond, start:end].mean(axis=0).mean(axis=0)
+            AX.hlines(value,
+                      xmin = start_sec,
+                      xmax = end_sec,
+                      color='dimgray',
+                      linestyle=':')
+            print("value to compare to threshold : ", value)
+                
+    else: #specific episode
+        state = ['active' if HMcond[episode_n] else 'resting']
+        color = 'orangered' if HMcond[episode_n] else 'grey'
+        #color = 'blue' 
+        print(f"Specific episode # {episode_n} ({state})") 
+        #AX.plot(episodes.t, episodes.running_speed[episode_n, 0:end], color=color)  
+        AX.plot(episodes.t, episodes.running_speed[episode_n, :],color=color)
+        AX.hlines(episodes.running_speed[episode_n, start:end].mean(axis=0),
+                  xmin = start_sec,
+                  xmax = end_sec,
+                  color='dimgray',
+                  linestyle=':')
+        print("value to compare to threshold : ", episodes.running_speed[episode_n,start:end].mean(axis=0))
+            
+    AX.set_ylabel('locomotion (cm/s)', fontsize=9)
+    AX.axvspan(0, episodes.time_duration[0], color='lightgrey')
+    AX.set_xlabel('Time (s)', fontsize=9)
+    AX.annotate('Visual stimulation', (0.30, 1), color='black', xycoords='axes fraction', va='top', fontsize=7)
+    AX.tick_params(axis='both', labelsize=7, pad=1, direction='out', length=4, width=1)
+    AX.grid(False)
+    AX.tick_params(axis='both', which='both', bottom=True, left=True)
+    AX.axhline(0.1, color="crimson")
+    #AX.set_xlim(-1, 4)
+    
+    return 0
+
+
 # %% jupyter={"source_hidden": true}
 def plot_dFoF_locomotion(episodes, 
                          HMcond, 
@@ -457,26 +537,26 @@ def plot_dFoF_locomotion(episodes,
         if roi_n is None:
             print(f"average of {episodes.dFoF.shape[1]} ROIs")
             if general:
-                AX[0].plot(ep.t, ep.dFoF[:, :, :].mean(axis=0).mean(axis=0), color='blue') 
-                AX[1].plot(ep.t, ep.running_speed[:, :].mean(axis=0), color='blue')
+                AX[0].plot(episodes.t, episodes.dFoF[:, :, :].mean(axis=0).mean(axis=0), color='blue') 
+                AX[1].plot(episodes.t, episodes.running_speed[:, :].mean(axis=0), color='blue')
             if active: 
-                AX[0].plot(ep.t, ep.dFoF[HMcond, :, :].mean(axis=0).mean(axis=0), color='orangered') 
-                AX[1].plot(ep.t, ep.running_speed[HMcond, :].mean(axis=0), color="orangered")
+                AX[0].plot(episodes.t, episodes.dFoF[HMcond, :, :].mean(axis=0).mean(axis=0), color='orangered') 
+                AX[1].plot(episodes.t, episodes.running_speed[HMcond, :].mean(axis=0), color="orangered")
             if resting: 
-                AX[0].plot(ep.t, ep.dFoF[~HMcond, :, :].mean(axis=0).mean(axis=0), color = 'grey') 
-                AX[1].plot(ep.t, ep.running_speed[~HMcond, :].mean(axis=0), color = "grey")
+                AX[0].plot(episodes.t, episodes.dFoF[~HMcond, :, :].mean(axis=0).mean(axis=0), color = 'grey') 
+                AX[1].plot(episodes.t, episodes.running_speed[~HMcond, :].mean(axis=0), color = "grey")
              
         else: 
             print(f"Specific ROI # {roi_n}")
             if general:
-                AX[0].plot(ep.t, ep.dFoF[:, roi_n, :].mean(axis=0), color='blue') 
-                AX[1].plot(ep.t, ep.running_speed[:, :].mean(axis=0), color='blue')
+                AX[0].plot(episodes.t, episodes.dFoF[:, roi_n, :].mean(axis=0), color='blue') 
+                AX[1].plot(episodes.t, episodes.running_speed[:, :].mean(axis=0), color='blue')
             if active: 
-                AX[0].plot(ep.t, ep.dFoF[HMcond, roi_n, :].mean(axis=0), color='orangered') 
-                AX[1].plot(ep.t, ep.running_speed[HMcond, :].mean(axis=0), color="orangered")
+                AX[0].plot(episodes.t, episodes.dFoF[HMcond, roi_n, :].mean(axis=0), color='orangered') 
+                AX[1].plot(episodes.t, episodes.running_speed[HMcond, :].mean(axis=0), color="orangered")
             if resting: 
-                AX[0].plot(ep.t, ep.dFoF[~HMcond, roi_n, :].mean(axis=0), color = 'grey') 
-                AX[1].plot(ep.t, ep.running_speed[~HMcond, :].mean(axis=0), color = "grey")
+                AX[0].plot(episodes.t, episodes.dFoF[~HMcond, roi_n, :].mean(axis=0), color = 'grey') 
+                AX[1].plot(episodes.t, episodes.running_speed[~HMcond, :].mean(axis=0), color = "grey")
                 
     else: #specific episode
         state = ['active' if HMcond[episode_n] else 'resting']
@@ -486,12 +566,12 @@ def plot_dFoF_locomotion(episodes,
         
         if roi_n is None: 
             print(f"average of {episodes.dFoF.shape[1]} ROIs")
-            AX[0].plot(ep.t, ep.dFoF[episode_n, :, :].mean(axis=0), color=color) 
-            AX[1].plot(ep.t, ep.running_speed[episode_n, :], color=color)
+            AX[0].plot(episodes.t, episodes.dFoF[episode_n, :, :].mean(axis=0), color=color) 
+            AX[1].plot(episodes.t, episodes.running_speed[episode_n, :], color=color)
         else: 
             print(f"Specific ROI # {roi_n}")
-            AX[0].plot(ep.t, ep.dFoF[episode_n, roi_n, :], color=color) 
-            AX[1].plot(ep.t, ep.running_speed[episode_n, :], color=color)
+            AX[0].plot(episodes.t, episodes.dFoF[episode_n, roi_n, :], color=color) 
+            AX[1].plot(episodes.t, episodes.running_speed[episode_n, :], color=color)
             
     AX[0].set_ylabel('dFoF', fontsize=9)
     AX[1].set_ylabel('locomotion (cm/s)', fontsize=9)
@@ -583,12 +663,6 @@ data.build_dFoF(verbose=False)
 data.protocols
 
 # %%
-EpMvDots = EpisodeData(data, quantities=['dFoF'], protocol_name='looming-stim')
-
-# %%
-EpMvDots.dFoF.shape
-
-# %% jupyter={"outputs_hidden": true}
 running_speed_threshold=0.1
 pupil_threshold = 2.9
 fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, metric="locomotion", mylabel=True)
@@ -596,7 +670,7 @@ fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_
 fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, metric="pupil", mylabel=True)
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_locomotion_pupil2.png", dpi=300, bbox_inches='tight')
 
-# %% jupyter={"outputs_hidden": true}
+# %% jupyter={"source_hidden": true}
 dataIndex, roiIndex = 2, 0
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
@@ -604,14 +678,52 @@ fig = plot_average_visually_evoked_activity_NDNF(data, roiIndex=roiIndex, pupil_
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_different_stim.png", dpi=300, bbox_inches='tight')
 
 # %% [markdown]
+# ### plot locomotion only
+
+# %%
+#Load episodes by protocol!
+protocol = "static-patch"
+pre_stim = 1
+Ep = EpisodeData(data, 
+                 quantities=['dFoF', 'running_speed', 'pupil'], 
+                 protocol_name=protocol, 
+                 prestim_duration=pre_stim)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                   pre_stim = pre_stim,
+                                   pupil_threshold = 0.29, 
+                                   running_speed_threshold = 0.1, 
+                                   metric = 'locomotion')
+
+epi_num = random.randint(0, Ep.dFoF.shape[0]-1) #chosen randomly  #34 is active   #2 is weird #22
+
+plot_locomotion(Ep, 
+                HMcond,  
+                episode_n = epi_num, 
+                general=True, 
+                active=False, 
+                resting=False)
+
+# %%
+Ep.
+
+# %%
+ep.
+
+# %%
+# EpisodeData?
+
+# %%
+
+# %% [markdown]
 # ### Specific ROI, specific episode
 
 # %%
-roi = 65 #random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17
-epi_num = 34 #random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  #34 is active
+roi = random.randint(0, Ep_MvDots.dFoF.shape[1]-1)  #chosen randomly  #roi=17
+epi_num = random.randint(0, Ep_MvDots.dFoF.shape[0]-1) #chosen randomly  #34 is active
 
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=roi, 
                      episode_n = epi_num, 
                      general=True, 
@@ -622,11 +734,11 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Specific episode, average ROI
 
-# %% jupyter={"outputs_hidden": true}
-epi_num = random.randint(0, ep.dFoF.shape[0]-1) #chosen randomly  
+# %%
+epi_num = random.randint(0, Ep_MvDots.dFoF.shape[0]-1) #chosen randomly  
 
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=None, 
                      episode_n = epi_num, 
                      general=True, 
@@ -636,60 +748,60 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ### Specific ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
-roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
+# %%
+roi = random.randint(0, Ep_MvDots.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
 
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=roi, 
                      episode_n = None, 
                      general=True, 
                      active=False, 
                      resting=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+# %%
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=roi, 
                      episode_n = None, 
                      general=True, 
                      active=True, 
                      resting=True)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %%
 roi = 14 #random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=roi, 
                      episode_n = None, 
-                     general=True, 
-                     active=False, 
-                     resting=False)
+                     general=False, 
+                     active=True, 
+                     resting=True)
 
 # %% [markdown]
 # ### Average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+# %%
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=None, 
                      episode_n = None, 
                      general=True, 
                      active=False, 
                      resting=False)
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+# %%
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=None, 
                      episode_n = None, 
                      general=True, 
                      active=False, 
                      resting=False)
 
-# %% jupyter={"source_hidden": true, "outputs_hidden": true}
-plot_dFoF_locomotion(ep, 
-                     HMcond, 
+# %%
+plot_dFoF_locomotion(Ep_MvDots, 
+                     HMcond_MvDots, 
                      roi_n=None, 
                      episode_n = None, 
                      general=False, 
@@ -699,7 +811,7 @@ plot_dFoF_locomotion(ep,
 # %% [markdown]
 # ## All files
 
-# %% jupyter={"source_hidden": true, "outputs_hidden": true}
+# %% jupyter={"outputs_hidden": true}
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -715,7 +827,7 @@ for i in range(rows*cols-len(SESSIONS['files'])):
 
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/all_behavior_locomotion_pupil1.png", dpi=300, bbox_inches='tight')
 
-# %% jupyter={"source_hidden": true, "outputs_hidden": true}
+# %% jupyter={"outputs_hidden": true}
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -734,7 +846,7 @@ fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/all_behav
 # %% [markdown]
 # ### ALL files, average ROI, average episodes
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 all_ep = []
 all_HMcond = []
 df = pd.DataFrame()
@@ -743,12 +855,12 @@ for dataIndex in range(len(SESSIONS['files'])):
     data = Data(SESSIONS['files'][dataIndex], verbose=False)
     data.build_dFoF(verbose=False)
     ep = EpisodeData(data,
-                 prestim_duration=0,
-                 protocol_id=0,
-                 quantities=['dFoF', 'running_speed'])
+                     prestim_duration=0,
+                     protocol_id=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'])
     all_ep.append(ep)
 
-    HMcond = compute_high_movement_cond(ep, 
+    HMcond = compute_high_arousal_cond(ep, 
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
@@ -767,11 +879,378 @@ for dataIndex in range(len(SESSIONS['files'])):
 print(df)
 
 # %%
+dataset = "NDNF"
+protocol = "moving-dots"
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+
 plot_dFoF_locomotion_all(all_ep, 
                          all_HMcond, 
-                         general=True, 
-                         active=False, 
-                         resting=False)
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+# %% [markdown]
+# ### test other protocols
+
+# %%
+protocol = 'moving-dots'
+
+Ep = EpisodeData(data, 
+                 quantities=['dFoF', 'running_speed', 'pupil'], 
+                 protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+# %% [markdown]
+# ### random dots
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'random-dots'
+
+Ep = EpisodeData(data, 
+                 quantities=['dFoF', 'running_speed', 'pupil'], 
+                 protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+
+# %% [markdown]
+# ### static patch
+
+# %%
+protocol = 'static-patch'
+Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+# %% [markdown]
+# ### looming stim
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'looming-stim'
+Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+# %% [markdown]
+# ### Natural images 4 repeats
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'Natural-Images-4-repeats'
+Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+# %% [markdown]
+# ### drifting gratings
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'drifting-gratings'
+Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
+
+HMcond = compute_high_arousal_cond(Ep, 
+                                    pupil_threshold = 0.29, 
+                                    running_speed_threshold = 0.1, 
+                                    metric = 'locomotion')
+print("Protocol : ", protocol)
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
+                     roi_n=None, 
+                     episode_n = None, 
+                     general=False, 
+                     active=True, 
+                     resting=True)
+
+# %% [markdown]
+# ### for all files
+
+# %%
+dataset = "NDNF"
+
+# %% jupyter={"outputs_hidden": true}
+protocol = "moving-dots"
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+
+# %% jupyter={"outputs_hidden": true}
+protocol = "random-dots"
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+# %% jupyter={"outputs_hidden": true}
+protocol = "static-patch"
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+# %% jupyter={"outputs_hidden": true}
+protocol = "looming-stim"
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'Natural-Images-4-repeats'
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
+
+# %% jupyter={"outputs_hidden": true}
+protocol = 'drifting-gratings'
+
+all_ep = []
+all_HMcond = []
+df = pd.DataFrame()
+
+for dataIndex in range(len(SESSIONS['files'])):
+    data = Data(SESSIONS['files'][dataIndex], verbose=False)
+    data.build_dFoF(verbose=False)
+    ep = EpisodeData(data,
+                     prestim_duration=0,
+                     quantities=['dFoF', 'running_speed', 'pupil'], 
+                     protocol_name=protocol)
+    all_ep.append(ep)
+
+    HMcond = compute_high_arousal_cond(ep, 
+                                        pupil_threshold = 0.29, 
+                                        running_speed_threshold = 0.1, 
+                                        metric = 'locomotion')
+    all_HMcond.append(HMcond)
+    
+    new_row = pd.DataFrame({
+    'File ID': [dataIndex],
+    'number of ROIs': [ep.dFoF.shape[1]],
+    'number of episodes': [ep.dFoF.shape[0]],
+    'number of active episodes': [np.sum(HMcond)], 
+    'proportion of active episodes (%)': [(np.sum(HMcond)/ep.dFoF.shape[0])*100]})
+    df = pd.concat([df, new_row], ignore_index=True)
+
+print("dataset : ", dataset)
+print("protocol : ", protocol)
+plot_dFoF_locomotion_all(all_ep, 
+                         all_HMcond, 
+                         general=False, 
+                         active=True, 
+                         resting=True)
 
 # %% [markdown]
 # ---------------------
@@ -822,7 +1301,7 @@ ep = EpisodeData(data,
                  protocol_id=0,
                  quantities=['dFoF', 'running_speed'])
 
-HMcond = compute_high_movement_cond(ep, 
+HMcond = compute_high_arousal_cond(ep, 
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
@@ -921,7 +1400,7 @@ for dataIndex in range(len(SESSIONS['files'])):
                  quantities=['dFoF', 'running_speed'])
     all_ep.append(ep)
 
-    HMcond = compute_high_movement_cond(ep, 
+    HMcond = compute_high_arousal_cond(ep, 
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
@@ -982,13 +1461,13 @@ for f, filename in enumerate(SESSIONS['files']):
     AX[f].set_title(str(f+1)+') '+data.filename.replace('.nwb',''), fontsize=8)
 
 
-# %% jupyter={"outputs_hidden": true, "source_hidden": true}
+# %% jupyter={"outputs_hidden": true}
 ep = EpisodeData(data,
                  prestim_duration=0,
                  protocol_id=0,
                  quantities=['dFoF', 'running_speed'])
 
-HMcond = compute_high_movement_cond(ep, 
+HMcond = compute_high_arousal_cond(ep, 
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
@@ -1035,7 +1514,7 @@ ep = EpisodeData(data,
                  protocol_id=0,
                  quantities=['dFoF', 'running_speed'])
 
-HMcond = compute_high_movement_cond(ep, 
+HMcond = compute_high_arousal_cond(ep, 
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')

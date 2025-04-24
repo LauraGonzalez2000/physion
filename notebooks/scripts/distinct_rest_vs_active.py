@@ -26,12 +26,13 @@ import numpy as np
 
 # %%
 
-def compute_high_movement_cond(episodes, 
-                               pupil_threshold = 0.29, 
+def compute_high_arousal_cond(episodes, 
+                              pre_stim = 1,
+                              pupil_threshold = 0.29, 
                                running_speed_threshold = 0.1, 
                                metric = None):
     """
-    Calculates wether the episodes are active or resting.
+    Calculates wether the episodes are aroused/active or calm/resting.
 
     Args:
         episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
@@ -40,7 +41,95 @@ def compute_high_movement_cond(episodes,
         metric (string) : metric used to split calm/rest and aroused/active states. ("pupil" or "locomotion")
 
     Returns:
-        np.array : HMcond is True when active and false when resting
+        np.array : HMcond is True when active/aroused and false when resting/calm
+    """
+    cond = []
+    
+    if metric=="pupil":
+        if pupil_threshold is not None:
+            cond = (episodes.pupil_diameter.mean(axis=1)>pupil_threshold)
+        else:
+            print("pupil_threshold not given")
+
+
+    if metric=="locomotion":
+        
+        if running_speed_threshold is not None: 
+            start = int(pre_stim*1000)
+            end = int(start + episodes.time_duration[0]*1000)
+            values = episodes.running_speed[:, start:end]  ###1000:3001 check if these boundaries cause problem
+            for value in values: 
+                #print(np.mean(value))
+                if (np.mean(value) > 0.1):
+                    cond.append(True)
+                else: 
+                    cond.append(False)
+            cond = np.array(cond) 
+    
+        else: 
+            print("running_speed_threshold not given")
+
+    return cond
+
+'''
+def compute_high_arousal_cond_old2(episodes, 
+                               pupil_threshold = 0.29, 
+                               running_speed_threshold = 0.1, 
+                               metric = None):
+    """
+    Calculates wether the episodes are aroused/active or calm/resting.
+
+    Args:
+        episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
+        pupil_threshold (float) : The threshold to discriminate calm state and aroused state
+        running_speed_threshold (float): The threshold to discriminate resting state and active state.
+        metric (string) : metric used to split calm/rest and aroused/active states. ("pupil" or "locomotion")
+
+    Returns:
+        np.array : HMcond is True when active/aroused and false when resting/calm
+    """
+    cond = []
+    
+    if metric=="pupil":
+        if pupil_threshold is not None:
+            cond = (episodes.pupil_diameter.mean(axis=1)>pupil_threshold)
+        else:
+            print("pupil_threshold not given")
+
+
+    if metric=="locomotion":
+        
+        if running_speed_threshold is not None: 
+            values = episodes.running_speed[:, :]  ###1000:3001 check if these boundaries cause problem
+            for value in values: 
+                #print(np.mean(value))
+                if (np.mean(value) > 0.1):
+                    cond.append(True)
+                else: 
+                    cond.append(False)
+            cond = np.array(cond) 
+    
+        else: 
+            print("running_speed_threshold not given")
+
+    return cond
+
+
+def compute_high_arousal_cond_old(episodes, 
+                               pupil_threshold = 0.29, 
+                               running_speed_threshold = 0.1, 
+                               metric = None):
+    """
+    Calculates wether the episodes are aroused/active or calm/resting.
+
+    Args:
+        episodes (array of Episode): (Episode#, ROI#, dFoF_values (0.5ms sampling rate)).
+        pupil_threshold (float) : The threshold to discriminate calm state and aroused state
+        running_speed_threshold (float): The threshold to discriminate resting state and active state.
+        metric (string) : metric used to split calm/rest and aroused/active states. ("pupil" or "locomotion")
+
+    Returns:
+        np.array : HMcond is True when active/aroused and false when resting/calm
     """
     cond = []
     
@@ -68,4 +157,6 @@ def compute_high_movement_cond(episodes,
             print("running_speed_threshold not given")
 
     return cond
+'''
+    
 # %%
