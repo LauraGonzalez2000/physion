@@ -140,7 +140,7 @@ for i in range(14):
     print(all_HMcond[i].shape)
     print("")
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Prepare data for the model
 
 # %%
@@ -171,7 +171,7 @@ df_unfolded = pd.DataFrame(rows)
 # %%
 df_unfolded
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### divide train and test sets
 
 # %%
@@ -191,7 +191,7 @@ print(f"{df_test['behav_state'].value_counts()} \n")
 print(df_test['behav_state'].value_counts(normalize=True))
 
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### create and fit the model
 
 # %%
@@ -229,13 +229,13 @@ result_lr = model_lr.fit(x, y)
 
 df_test["lr_predicted_dFoF"] = model_lr.predict(df_test["running_speed"].values.reshape(-1, 1))
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Evaluate the predictions
 
 # %% [markdown]
 # ### Mixed linear model
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Mean Squared Error (MSE) / Root Mean Squared Error (RMSE)
 
 # %%
@@ -254,7 +254,7 @@ rmse = np.sqrt(mse)
 print("MSE:", mse)
 print("RMSE:", rmse)
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### R² Score (Coefficient of Determination)
 
 # %% jupyter={"outputs_hidden": true}
@@ -268,7 +268,7 @@ print("Mixed linear model R² Score:", r2)
 r2 = r2_score(df_test["dFoF_meanROIs"], df_test["lr_predicted_dFoF"])
 print(f"Linear regression R²: {r2:.3f}")
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Correlation (Pearson) Between True and Predicted
 
 # %%
@@ -279,7 +279,7 @@ print("Correlation (Pearson):", corr)
 corr = np.corrcoef(df_test["dFoF_meanROIs"], df_test["lr_predicted_dFoF"])[0, 1]
 print("Correlation (Pearson):", corr)
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Visually: 
 
 # %%

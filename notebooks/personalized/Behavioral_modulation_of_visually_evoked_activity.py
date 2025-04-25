@@ -1606,3 +1606,69 @@ STAT_TEST['moving-dots']['interval_post'] = [1.5, 2.5]
 STAT_TEST['random-dots']['interval_post'] = [1.5, 2.5]
 STAT_TEST['static-patch']['interval_post'] = [0.5, 1.5]
 '''
+
+# %%
+filename = os.path.join(os.path.expanduser('~'), 'DATA','In_Vivo_experiments', 'NDNF-WT-Dec-2022','NWBs',  '2022_12_14-13-27-41.nwb')
+data = Data(filename, verbose=False)
+
+data.build_dFoF()
+data.build_running_speed()
+
+ep = EpisodeData(data,
+                 prestim_duration=0,
+                 protocol_id=0,
+                 quantities=['dFoF', 'running_speed'])
+
+print(ep.dFoF.shape) # (episodes, rois, time samples)
+n_episodes = ep.dFoF.shape[0]
+#roi = random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly
+roi=11
+print(roi)
+
+fig, ax = pt.figure(figsize=(2, 2.5))
+temp = ep.dFoF[:,roi,:]
+print(temp.shape)
+ax.plot(ep.t, temp.mean(axis=0)) #mean of all the episodes
+ax.axvspan(0, 2, color='lightgrey')
+ax.set_ylabel('dFoF')
+ax.set_xlabel('time (s)')
+ax.annotate('Visual stim', (0.25, 1), color='black', xycoords='axes fraction', va='top')
+
+print(np.mean(ep.running_speed, axis=1))
+ep.state = [True if speed > 0.07 else False for speed in np.mean(ep.running_speed, axis=1)]
+print(ep.state)
+
+fig, AX = pt.figure(axes=(2,1))
+roi= random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly
+
+for state, ax in zip(np.unique(ep.state), AX):
+    pt.plot(ep.t, 
+            ep.dFoF[ep.state==state, roi, :].mean(axis=0), 
+            sy=ep.dFoF[ep.state==state, roi, :].std(axis=0), 
+            ax=ax, title=state)
+
+pt.set_common_ylims(AX)
+
+print(len(ep.dFoF[ep.state==state, roi, :].mean(axis=0)))
+
+i= 0
+for run_speed in ep.running_speed :
+    print(ep.state)
+    if np.mean(run_speed, axis=0) > 0.5:
+        ep.state[i] = True
+    else: 
+        ep.state[i] = False
+    i+=1
+roi=random.randint(0, ep.dFoF.shape[1]-1)
+
+fig, ax1 = plt.subplots(figsize=(2, 2.5))
+ax2 = ax1.twinx()
+print(ep.running_speed.shape)
+temp_dFoF = ep.dFoF[:,roi,:]
+temp_running = ep.running_speed[roi,:]
+print(temp_dFoF.shape)
+
+ax1.plot(ep.t, temp_running)
+ax2.plot(ep.t, temp_dFoF.mean(axis=0)) #mean of all the episodes
+ax1.axvspan(0, 2, color='lightgrey')
+

@@ -25,10 +25,10 @@ from physion.analysis.read_NWB import Data, scan_folder_for_NWBfiles
 from physion.analysis.process_NWB import EpisodeData
 
 sys.path.append('../scripts')
-from distinct_rest_vs_active import compute_high_movement_cond
+from distinct_rest_vs_active import compute_high_arousal_cond
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def load_sessions(session_dict, pupil_threshold=0.29, running_speed_threshold=0.1):
     all_ep = []
     all_HMcond = []
@@ -43,7 +43,7 @@ def load_sessions(session_dict, pupil_threshold=0.29, running_speed_threshold=0.
                          quantities=['dFoF', 'running_speed'])
         all_ep.append(ep)
 
-        HMcond = compute_high_movement_cond(
+        HMcond = compute_high_arousal_cond(
             ep,
             pupil_threshold=pupil_threshold,
             running_speed_threshold=running_speed_threshold,
@@ -54,7 +54,7 @@ def load_sessions(session_dict, pupil_threshold=0.29, running_speed_threshold=0.
     return all_ep, all_HMcond
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_dFoF_locomotion_all(all_episodes_saline, 
                              all_episodes_keta,
                              all_HMcond_saline,
@@ -150,7 +150,7 @@ SESSIONS_saline['nwbfiles'] = [os.path.basename(f) for f in SESSIONS_saline['fil
 all_ep_keta, all_HMcond_keta = load_sessions(SESSIONS_keta)
 all_ep_saline, all_HMcond_saline = load_sessions(SESSIONS_saline)
 
-# %%
+# %% jupyter={"outputs_hidden": true}
 plot_dFoF_locomotion_all(all_ep_saline, 
                          all_ep_keta, 
                          all_HMcond_saline,
