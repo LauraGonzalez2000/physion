@@ -112,8 +112,6 @@ def lr_dFoF_running(run_speed_sampled, dFoF, r_sq_s):
         r_sq_s.append(linear_regression(x=x, 
                                         y=y, 
                                         ax=ax))
-        
-    
     # Set common y-limits
     pt.set_common_ylims(AX)
     
@@ -121,6 +119,22 @@ def lr_dFoF_running(run_speed_sampled, dFoF, r_sq_s):
     for ax in AX[n_ori:]:
         ax.set_visible(False)
         
+    return 0
+
+def lr_dFoF_running_avg(run_speed_sampled, dFoF, r_sq_s):
+    
+    fig, AX = pt.figure(axes=(1, 1), hspace=2)  # Create a grid with (rows, cols)
+    
+    ax.scatter(run_speed_sampled, dFoF[:, :].mean(axis=0))
+    ax.set_xlabel("running speed (cm/s)")
+    ax.set_ylabel("dFoF")
+    ax.set_title('Average all ROIs')
+
+    x= np.array(run_speed_sampled).reshape((-1, 1))
+    y= np.array(dFoF[roi, :])
+    r_sq_s.append(linear_regression(x=x, 
+                                    y=y, 
+                                    ax=ax))
     return 0
 
 def explained_var_roi(run_speed_sampled, dFoF, roi):
@@ -203,7 +217,7 @@ for i in range(len(fns)):
     
 
 # %% [markdown]
-# ## NDNF data 2022
+# # NDNF 2022
 
 # %%
 base_path = os.path.join(os.path.expanduser('~'), 'DATA','In_Vivo_experiments','NDNF-WT-Dec-2022', 'NWBs')
@@ -218,6 +232,7 @@ files_NDNF = ['2022_12_14-13-27-41.nwb',
 
 # %%
 fns = generate_file_paths(files_NDNF, base_path)
+
 for i in range(len(fns)):
     data = Data(fns[i], verbose=False)
     data.build_dFoF()
