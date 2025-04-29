@@ -85,7 +85,8 @@ class MainWindow(QtWidgets.QMainWindow):
         from physion.intrinsic.analysis import open_intrinsic_folder,\
                 moved_pixels, load_intrinsic_data, compute_phase_maps,\
                 compute_retinotopic_maps, perform_area_segmentation,\
-                update_img1, update_img2, save_intrinsic, pdf_intrinsic
+                update_img1, update_img2, save_intrinsic, pdf_intrinsic,\
+                reset_ROI
     else:
         from physion.gui.parts import inactivated as intrinsic
     # somatosensory
@@ -297,12 +298,11 @@ class MainWindow(QtWidgets.QMainWindow):
             # ---- DEBUG interface ---- #
             # self.SS_intrinsic()
             # self.facemotion()
-            self.pupil()
+            # self.pupil()
             # self.transfer_gui()
             # self.suite2p_preprocessing_UI()
             # self.build_NWB_UI()
             # self.add_imaging()
-            # self.intrinsic()
             # self.NWBs = ['/home/yann.zerlaut/DATA/JO-VIP-CB1/2022_11_16-15-17-59.nwb']
             # self.IMAGINGs = ['/home/yann.zerlaut/DATA/JO-VIP-CB1/Imaging-2Chan/TSeries-11162022-nomark-000']
             # self.runAddOphys()
@@ -314,6 +314,10 @@ class MainWindow(QtWidgets.QMainWindow):
             # self.trial_averaging()
             # self.FOV()
             # self.multimodal()
+            self.intrinsic()
+            self.lastBox.setChecked(False)
+            self.datafolder = '/Users/yann/UNPROCESSED/CIBELE/2024_06_28/14-35-30'
+            # self.load_intrinsic_data()
 
     def refresh(self):
         tab_id = self.tabWidget.currentIndex()

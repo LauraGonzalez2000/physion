@@ -1,3 +1,2 @@
-from . import stat_tools, tools, read_NWB, process_NWB, behavior, dataframe, protocols
-
-
+from . import behavior, dataframe, process_NWB, read_NWB,\
+        stat_tools, summary_pdf, tools, trial_averaging, protocols

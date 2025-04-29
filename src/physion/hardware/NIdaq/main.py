@@ -31,8 +31,9 @@ class Acquisition:
 
         self.sampling_rate = sampling_rate
         self.dt = 1./self.sampling_rate
-        self.max_time = max_time
         self.buffer_size = int(buffer_time*self.sampling_rate)
+        self.Nsamples = int(max_time/buffer_time)*self.buffer_size # ENFORCE multiple of buffer time !! 
+        self.max_time = self.Nsamples*self.sampling_rate
         self.Nchannel_analog_in = Nchannel_analog_in
         self.Nchannel_digital_in = Nchannel_digital_in
         self.filename = filename
@@ -61,7 +62,7 @@ class Acquisition:
             Nchannel = len(output_funcs)
             self.output_channels = \
                     get_analog_output_channels(self.device)[:Nchannel]
-            t = np.arange(int(self.max_time*self.sampling_rate))*self.dt
+            t = np.arange(int(self.Nsamples))*self.dt
             outputs = np.zeros((Nchannel,len(t)))
             for i, func in enumerate(output_funcs):
                 outputs[i] = func(t)
@@ -70,7 +71,7 @@ class Acquisition:
             # -
             Nchannel = max([d['channel'] for d in output_steps])+1
             # have to be elements 
-            t = np.arange(int(self.max_time*self.sampling_rate))*self.dt
+            t = np.arange(int(self.Nsamples))*self.dt
             outputs = np.zeros((Nchannel,len(t)))
             # add as many channels as necessary
             for step in output_steps:
@@ -83,6 +84,8 @@ class Acquisition:
 
 
         self.outputs = outputs      
+
+
             
     def launch(self):
 
@@ -99,7 +102,7 @@ class Acquisition:
         # for both the AI and AO tasks.
         self.sample_clk_task.co_channels.add_co_pulse_chan_freq('{0}/ctr0'.format(self.device.name),
                                                                 freq=self.sampling_rate)
-        self.sample_clk_task.timing.cfg_implicit_timing(samps_per_chan=int(self.max_time/self.dt))
+        self.sample_clk_task.timing.cfg_implicit_timing(samps_per_chan=int(self.Nsamples))
         self.samp_clk_terminal = '/{0}/Ctr0InternalOutput'.format(self.device.name)
 
         ### ---- OUTPUTS ---- ##
@@ -110,7 +113,7 @@ class Acquisition:
             self.write_task.timing.cfg_samp_clk_timing(
                 self.sampling_rate, source=self.samp_clk_terminal,
                 active_edge=Edge.FALLING, 
-                samps_per_chan=int(self.max_time*self.sampling_rate))
+                samps_per_chan=int(self.Nsamples))
         
         ### ---- INPUTS ---- ##
         if self.Nchannel_analog_in>0:
@@ -124,11 +127,11 @@ class Acquisition:
         if self.Nchannel_analog_in>0:
             self.read_analog_task.timing.cfg_samp_clk_timing(
                 self.sampling_rate, source=self.samp_clk_terminal,
-                active_edge=Edge.FALLING, samps_per_chan=int(self.max_time*self.sampling_rate))
+                active_edge=Edge.FALLING, samps_per_chan=int(self.Nsamples))
         if self.Nchannel_digital_in>0:
             self.read_digital_task.timing.cfg_samp_clk_timing(
                 self.sampling_rate, source=self.samp_clk_terminal,
-                active_edge=Edge.FALLING, samps_per_chan=int(self.max_time*self.sampling_rate))
+                active_edge=Edge.FALLING, samps_per_chan=int(self.Nsamples))
         
         if self.Nchannel_analog_in>0:
             self.analog_reader = AnalogMultiChannelReader(self.read_analog_task.in_stream)
@@ -235,19 +238,23 @@ class Acquisition:
 
         
 if __name__=='__main__':
-    acq = Acquisition(dt=1e-3,
-                      Nchannel_analog_in=0,
+
+    # Simple Test: Connect together AO0 and AI0 
+    # --> we send a pulse in AO0
+    acq = Acquisition(sampling_rate=1000,
+                      Nchannel_analog_in=1,
                       Nchannel_digital_in=2,
-                      output_steps=[{'channel':0, 'onset': 0.3, 'duration': 1., 'value':5}],
+                      output_steps=[{'channel':0, 'onset': 1., 'duration': 1., 'value':5}],
                       filename='data.npy')
     acq.launch()
     tstart = time.time()
     while (time.time()-tstart)<3.:
         pass
-    # acq.running=False
     acq.close()
-    print(acq.analog_data)
-    print(np.array(acq.digital_data)[0,-100:])
+    # --> should appear in AI0:
+    import matplotlib.pylab as plt
+    plt.plot(acq.analog_data[0])
+    plt.show()
     
     # print(acq.digital_data.shape)
     # np.save('data.npy', acq.analog_data)

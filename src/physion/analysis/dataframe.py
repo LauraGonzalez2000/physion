@@ -41,7 +41,7 @@ def NWB_to_dataframe(nwbfile,
     if time_sampling_reference=='dFoF' and ('ophys' in data.nwbfile.processing):
         time = np.array(data.Fluorescence.timestamps[:])[::subsampling]
     else:
-        print('taking running pseed by default')
+        print('taking running speed by default')
         time = data.t_running_speed[::subsampling]
 
     dataframe = pandas.DataFrame({'time':time})
@@ -59,6 +59,11 @@ def NWB_to_dataframe(nwbfile,
         #vRois
         dataframe.nROIs = data.nROIs
 
+<<<<<<< HEAD
+=======
+        dataframe.nROIs = data.nROIs
+
+>>>>>>> 5d6d5b7495f1d2b69a3bf11445656c75a7702747
         for i in range(data.nROIs):
 
             if ('dFoF' in normalize) or (normalize=='all'):
@@ -258,11 +263,19 @@ def build_stim_specific_array(data,
     for i in np.flatnonzero(index_cond):
 
         if i<data.nwbfile.stimulus['time_start_realigned'].num_samples:
+<<<<<<< HEAD
             tstart = data.nwbfile.stimulus['time_start_realigned'].data[i,0]
             tstop = data.nwbfile.stimulus['time_stop_realigned'].data[i,0]
             #time
             t_cond = (time>=tstart) & (time<tstop)
             #array[t_cond] 
+=======
+            tstart = data.nwbfile.stimulus['time_start_realigned'].data[i]
+            tstop = data.nwbfile.stimulus['time_stop_realigned'].data[i]
+            
+
+            t_cond = (time>=float(tstart)) & (time<float(tstop))
+>>>>>>> 5d6d5b7495f1d2b69a3bf11445656c75a7702747
             array[t_cond] = True
 
     # TO BE FIXED
