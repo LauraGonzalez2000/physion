@@ -37,7 +37,7 @@ import random
 from matplotlib.ticker import MultipleLocator
 
 
-# %%
+# %% jupyter={"source_hidden": true}
 def plot_behavior_in_episodes(data,
                               ax=None,
                               running_speed_threshold=0.1,
@@ -519,7 +519,7 @@ def plot_locomotion(episodes,
     return 0
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_dFoF_locomotion(episodes, 
                          HMcond, 
                          roi_n=None, 
@@ -577,7 +577,7 @@ def plot_dFoF_locomotion(episodes,
     AX[1].set_ylabel('locomotion (cm/s)', fontsize=9)
 
     for ax in AX:
-        ax.axvspan(0, 2, color='lightgrey')
+        ax.axvspan(0, int(np.unique(episodes.time_duration)), color='lightgrey')
         ax.set_xlabel('Time (s)', fontsize=9)
         ax.annotate('Visual stimulation', (0.30, 1), color='black', xycoords='axes fraction', va='top', fontsize=7)
         ax.tick_params(axis='both', labelsize=7, pad=1, direction='out', length=4, width=1)
@@ -587,7 +587,7 @@ def plot_dFoF_locomotion(episodes,
     return 0
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_dFoF_locomotion_all(all_episodes, 
                          all_HMcond, 
                          general=True, 
@@ -632,7 +632,7 @@ def plot_dFoF_locomotion_all(all_episodes,
     AX[1].set_ylabel('locomotion (cm/s)', fontsize=9)
 
     for ax in AX:
-        ax.axvspan(0, 2, color='lightgrey')
+        ax.axvspan(0, int(np.unique(all_episodes[0].time_duration)), color='lightgrey')
         ax.set_xlabel('Time (s)', fontsize=9)
         ax.annotate('Visual stimulation', (0.30, 1), color='black', xycoords='axes fraction', va='top', fontsize=7)
         ax.tick_params(axis='both', labelsize=7, pad=1, direction='out', length=4, width=1)
@@ -671,7 +671,7 @@ fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_
 fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, pupil_threshold=pupil_threshold, metric="pupil", mylabel=True)
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_locomotion_pupil2.png", dpi=300, bbox_inches='tight')
 
-# %% jupyter={"source_hidden": true}
+# %% jupyter={"outputs_hidden": true}
 dataIndex, roiIndex = 2, 0
 data = Data(SESSIONS['files'][dataIndex], verbose=False)
 data.build_dFoF(verbose=False)
@@ -706,25 +706,40 @@ plot_locomotion(Ep,
                 resting=False)
 
 # %%
-Ep.
+protocol = "moving-dots"
+pre_stim = 1
+Ep = EpisodeData(data, 
+                 quantities=['dFoF', 'running_speed', 'pupil'], 
+                 protocol_name=protocol, 
+                 prestim_duration=pre_stim)
 
-# %%
-ep.
+HMcond = compute_high_arousal_cond(Ep, 
+                                   pre_stim = pre_stim,
+                                   pupil_threshold = 0.29, 
+                                   running_speed_threshold = 0.1, 
+                                   metric = 'locomotion')
 
-# %%
-# EpisodeData?
-
-# %%
-
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Specific ROI, specific episode
 
-# %%
-roi = random.randint(0, Ep_MvDots.dFoF.shape[1]-1)  #chosen randomly  #roi=17
-epi_num = random.randint(0, Ep_MvDots.dFoF.shape[0]-1) #chosen randomly  #34 is active
+# %% jupyter={"source_hidden": true}
+protocol = 'moving-dots'
 
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+Ep = EpisodeData(data, 
+                 quantities=['dFoF', 'running_speed', 'pupil'], 
+                 protocol_name=protocol)
+HMcond = compute_high_arousal_cond(Ep, 
+                                   pre_stim = 1,
+                                   pupil_threshold = 0.29, 
+                                   running_speed_threshold = 0.1, 
+                                   metric = 'locomotion')
+
+# %%
+roi = random.randint(0, Ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17
+epi_num = random.randint(0, Ep.dFoF.shape[0]-1) #chosen randomly  #34 is active
+
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=roi, 
                      episode_n = epi_num, 
                      general=True, 
@@ -732,14 +747,14 @@ plot_dFoF_locomotion(Ep_MvDots,
                      resting=False)
 
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Specific episode, average ROI
 
 # %%
-epi_num = random.randint(0, Ep_MvDots.dFoF.shape[0]-1) #chosen randomly  
+epi_num = random.randint(0, Ep.dFoF.shape[0]-1) #chosen randomly  
 
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=None, 
                      episode_n = epi_num, 
                      general=True, 
@@ -750,19 +765,19 @@ plot_dFoF_locomotion(Ep_MvDots,
 # ### Specific ROI, average episodes
 
 # %%
-roi = random.randint(0, Ep_MvDots.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
+roi = 17 #random.randint(0, Ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
 
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=roi, 
                      episode_n = None, 
-                     general=True, 
-                     active=False, 
-                     resting=False)
+                     general=False, 
+                     active=True, 
+                     resting=True)
 
 # %%
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=roi, 
                      episode_n = None, 
                      general=True, 
@@ -771,20 +786,20 @@ plot_dFoF_locomotion(Ep_MvDots,
 
 # %%
 roi = 14 #random.randint(0, ep.dFoF.shape[1]-1)  #chosen randomly  #roi=17  
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=roi, 
                      episode_n = None, 
                      general=False, 
                      active=True, 
                      resting=True)
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Average ROI, average episodes
 
 # %%
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=None, 
                      episode_n = None, 
                      general=True, 
@@ -792,8 +807,8 @@ plot_dFoF_locomotion(Ep_MvDots,
                      resting=False)
 
 # %%
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=None, 
                      episode_n = None, 
                      general=True, 
@@ -801,8 +816,8 @@ plot_dFoF_locomotion(Ep_MvDots,
                      resting=False)
 
 # %%
-plot_dFoF_locomotion(Ep_MvDots, 
-                     HMcond_MvDots, 
+plot_dFoF_locomotion(Ep, 
+                     HMcond, 
                      roi_n=None, 
                      episode_n = None, 
                      general=False, 
@@ -812,7 +827,7 @@ plot_dFoF_locomotion(Ep_MvDots,
 # %% [markdown]
 # ## All files
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -828,7 +843,7 @@ for i in range(rows*cols-len(SESSIONS['files'])):
 
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/all_behavior_locomotion_pupil1.png", dpi=300, bbox_inches='tight')
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 rows = 3
 cols = 5
 fig, AX = pt.plt.subplots(rows, cols, figsize=(12,7))
@@ -905,6 +920,7 @@ HMcond = compute_high_arousal_cond(Ep,
                                     pupil_threshold = 0.29, 
                                     running_speed_threshold = 0.1, 
                                     metric = 'locomotion')
+
 print("Protocol : ", protocol)
 plot_dFoF_locomotion(Ep, 
                      HMcond, 
@@ -917,7 +933,7 @@ plot_dFoF_locomotion(Ep,
 # %% [markdown]
 # ### random dots
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'random-dots'
 
 Ep = EpisodeData(data, 
@@ -961,7 +977,7 @@ plot_dFoF_locomotion(Ep,
 # %% [markdown]
 # ### looming stim
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'looming-stim'
 Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
 
@@ -981,7 +997,7 @@ plot_dFoF_locomotion(Ep,
 # %% [markdown]
 # ### Natural images 4 repeats
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'Natural-Images-4-repeats'
 Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
 
@@ -1001,7 +1017,7 @@ plot_dFoF_locomotion(Ep,
 # %% [markdown]
 # ### drifting gratings
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'drifting-gratings'
 Ep = EpisodeData(data, quantities=['dFoF', 'running_speed', 'pupil'], protocol_name=protocol)
 
@@ -1024,7 +1040,7 @@ plot_dFoF_locomotion(Ep,
 # %%
 dataset = "NDNF"
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = "moving-dots"
 
 all_ep = []
@@ -1063,7 +1079,7 @@ plot_dFoF_locomotion_all(all_ep,
                          resting=True)
 
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = "random-dots"
 
 all_ep = []
@@ -1101,7 +1117,7 @@ plot_dFoF_locomotion_all(all_ep,
                          active=True, 
                          resting=True)
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = "static-patch"
 
 all_ep = []
@@ -1139,7 +1155,7 @@ plot_dFoF_locomotion_all(all_ep,
                          active=True, 
                          resting=True)
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = "looming-stim"
 
 all_ep = []
@@ -1177,7 +1193,7 @@ plot_dFoF_locomotion_all(all_ep,
                          active=True, 
                          resting=True)
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'Natural-Images-4-repeats'
 
 all_ep = []
@@ -1215,7 +1231,7 @@ plot_dFoF_locomotion_all(all_ep,
                          active=True, 
                          resting=True)
 
-# %% jupyter={"outputs_hidden": true}
+# %%
 protocol = 'drifting-gratings'
 
 all_ep = []

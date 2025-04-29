@@ -27,10 +27,10 @@ import numpy as np
 # %%
 
 def compute_high_arousal_cond(episodes, 
-                              pre_stim = 1,
+                              pre_stim = 0,
                               pupil_threshold = 0.29, 
-                               running_speed_threshold = 0.1, 
-                               metric = None):
+                              running_speed_threshold = 0.1, 
+                              metric = None):
     """
     Calculates wether the episodes are aroused/active or calm/resting.
 
