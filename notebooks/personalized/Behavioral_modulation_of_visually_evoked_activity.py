@@ -37,7 +37,7 @@ import random
 from matplotlib.ticker import MultipleLocator
 
 
-# %% jupyter={"source_hidden": true}
+# %%
 def plot_behavior_in_episodes(data,
                               ax=None,
                               running_speed_threshold=0.1,
@@ -665,9 +665,10 @@ data.protocols
 # %%
 running_speed_threshold=0.1
 pupil_threshold = 2.9
-fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, metric="locomotion", mylabel=True)
+fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, pupil_threshold=pupil_threshold, metric="locomotion", mylabel=True)
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_locomotion_pupil1.png", dpi=300, bbox_inches='tight')
-fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, metric="pupil", mylabel=True)
+
+fig, ax = plot_behavior_in_episodes(data, running_speed_threshold=running_speed_threshold, pupil_threshold=pupil_threshold, metric="pupil", mylabel=True)
 fig.savefig("C:/Users/laura.gonzalez/Output_expe/In_Vivo/NDNF/Behavior/behavior_locomotion_pupil2.png", dpi=300, bbox_inches='tight')
 
 # %% jupyter={"source_hidden": true}

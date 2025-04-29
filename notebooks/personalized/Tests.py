@@ -117,12 +117,28 @@ plt.ylabel("running speed (cm/s)")
 # ## NDNF dataset
 
 # %%
+from sklearn.linear_model import LinearRegression
+
+
+# %%
+def linear_regression(x, y, ax):
+    model = LinearRegression()
+    model.fit(x,y)
+    r_sq = model.score(x,y)
+    fit = model.coef_*x + model.intercept_ 
+    ax.plot(x, fit, color='red')
+    r_sq = model.score(x,y)
+    ax.annotate(text=fr"$R^2 = {r_sq:.3f}$", xy=[0.5,32], fontsize=6, color='red')
+    return r_sq
+
+
+# %%
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
 # %%
-index = 6
+index = 2
 filename = SESSIONS['files'][index]
 data = Data(filename,
             verbose=False)
@@ -136,14 +152,84 @@ running_FaceCamera_sampled = data.build_running_speed(specific_time_sampling=dat
 running_dFoF_sampled = data.build_running_speed(specific_time_sampling=data.t_dFoF)
 pt.figure(figsize=(2,2))
 
-roi_n = random.randint(0, data.dFoF.shape[0]-1) 
+
+roi_n = 3 #random.randint(0, data.dFoF.shape[0]-1) #90
 print('Dataset : NDNF')
 print('File : ', index)
 print('ROI : ', roi_n)
-plt.scatter(running_dFoF_sampled, data.dFoF[roi_n,:])
-plt.xlabel("dFoF")
-plt.ylabel("running speed (cm/s)")
-plt.axhline(0.1, color = 'black', label = 'threshold', linewidth=0.6)
+plt.scatter(running_dFoF_sampled, data.dFoF[roi_n,:],  s=0.1)
+plt.ylabel("dFoF")
+plt.xlabel("running speed (cm/s)")
+plt.axvline(0.1, color = 'black', label = 'threshold', linewidth=0.6)
+
+x= np.array(running_dFoF_sampled).reshape((-1, 1))
+y= np.array(data.dFoF[roi_n, :])
+r_sq_s = linear_regression(x=x, 
+                                y=y, 
+                                ax=plt)
+print("R^2 : ", f"{r_sq_s:.3f}")
+
+# %%
+r_sq_s_all = []
+
+for index in range(len(SESSIONS['files'])):
+    filename = SESSIONS['files'][index]
+    data = Data(filename,
+                verbose=False)
+    data.build_dFoF()
+    data.t_dFoF[-1]
+    data.build_pupil_diameter()
+    
+    running_FaceCamera_sampled = data.build_running_speed(specific_time_sampling=data.t_rawFluo)
+    running_dFoF_sampled = data.build_running_speed(specific_time_sampling=data.t_dFoF)
+    
+    r_sq_s = []
+    
+    for roi_n in range(data.dFoF.shape[0]-1): 
+        x= np.array(running_dFoF_sampled).reshape((-1, 1))
+        y= np.array(data.dFoF[roi_n, :])
+        model = LinearRegression()
+        model.fit(x,y)
+        r_sq = model.score(x,y)
+        r_sq_s.append(r_sq)
+    
+    r_sq_s_all.append(r_sq_s)
+    
+
+# %% jupyter={"outputs_hidden": true}
+plt.figure(figsize=(10, 5))
+plt.boxplot(r_sq_s_all)
+plt.xlabel('Session')
+plt.ylabel('R²')
+plt.title('R² Distribution per Session')
+plt.xticks(ticks=range(1, len(SESSIONS['files'])+1), labels=[f' {i+1}' for i in range(len(SESSIONS['files']))])
+plt.grid(True)
+plt.show()
+
+
+# %%
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Find the maximum number of ROIs across sessions
+max_rois = max(len(r_sq_s) for r_sq_s in r_sq_s_all)
+
+# Pad each list with np.nan to make them equal length
+r_sq_array = np.array([r_sq_s + [np.nan] * (max_rois - len(r_sq_s)) for r_sq_s in r_sq_s_all]).T
+
+# Plot heatmap
+plt.figure(figsize=(12, 6))
+sns.heatmap(r_sq_array, annot=False, cmap='viridis', cbar=True)
+plt.xlabel('Session')
+plt.ylabel('ROI')
+plt.title('R² per ROI across Sessions')
+plt.show()
+
+
+# %%
+
+# %%
 
 # %%
 data.build_dFoF()
