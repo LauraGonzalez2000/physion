@@ -113,6 +113,38 @@ plt.scatter(data.dFoF[0,:], running_dFoF_sampled)
 plt.xlabel("dFoF")
 plt.ylabel("running speed (cm/s)")
 
+# %% [markdown]
+# ## NDNF dataset
+
+# %%
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
+SESSIONS = scan_folder_for_NWBfiles(datafolder)
+SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
+
+# %%
+index = 6
+filename = SESSIONS['files'][index]
+data = Data(filename,
+            verbose=False)
+
+# %%
+data.build_dFoF()
+data.t_dFoF[-1]
+data.build_pupil_diameter()
+
+running_FaceCamera_sampled = data.build_running_speed(specific_time_sampling=data.t_rawFluo)
+running_dFoF_sampled = data.build_running_speed(specific_time_sampling=data.t_dFoF)
+pt.figure(figsize=(2,2))
+
+roi_n = random.randint(0, data.dFoF.shape[0]-1) 
+print('Dataset : NDNF')
+print('File : ', index)
+print('ROI : ', roi_n)
+plt.scatter(running_dFoF_sampled, data.dFoF[roi_n,:])
+plt.xlabel("dFoF")
+plt.ylabel("running speed (cm/s)")
+plt.axhline(0.1, color = 'black', label = 'threshold', linewidth=0.6)
+
 # %%
 data.build_dFoF()
 data.t_dFoF[-1]

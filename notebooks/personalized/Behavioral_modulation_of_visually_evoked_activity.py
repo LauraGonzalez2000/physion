@@ -37,7 +37,7 @@ import random
 from matplotlib.ticker import MultipleLocator
 
 
-# %%
+# %% jupyter={"source_hidden": true}
 def plot_behavior_in_episodes(data,
                               ax=None,
                               running_speed_threshold=0.1,
@@ -439,7 +439,7 @@ def plot_average_visually_evoked_activity_(data,
     return fig
 
 
-# %%
+# %% jupyter={"source_hidden": true}
 def plot_locomotion(episodes, 
                     HMcond, 
                     episode_n = None, 
