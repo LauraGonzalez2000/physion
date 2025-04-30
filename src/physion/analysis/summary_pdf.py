@@ -4,90 +4,48 @@ import numpy as np
 # import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
-from physion.analysis import protocols
-from physion.utils.paths import python_path
-from physion.utils.files import get_files_with_extension
-from physion.analysis.read_NWB import Data
+import physion
 import physion.utils.plot_tools as pt
 
-from physion.dataviz.raw import plot as plot_raw
-from physion.dataviz.imaging import show_CaImaging_FOV
-
-cwd = os.path.join(pathlib.Path(__file__).resolve().parents[3], 'src') # current working directory
-
-def summary_pdf_folder(filename):
-
-    folder = os.path.join(os.path.dirname(filename),
-            'pdfs', os.path.basename(filename).replace('.nwb', ''))
-    pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
-
-    return folder
-
-def join_pdf(PAGES, pdf):
-    """
-    Using PDFTK, only on linux for now
-    """
-    cmd = '/usr/bin/pdftk ' 
-    for page in PAGES:
-        cmd += '%s '%page
-    cmd += 'cat output %s' % pdf
-
-    subprocess.Popen(cmd,
-                     shell=True,
-                     stdout=subprocess.PIPE,
-                     stderr=subprocess.STDOUT)
-
-
-def open_pdf(self,
-             Nmax=1000000,
-             include=['exp', 'raw', 'behavior', 'rois', 'protocols'],
-             verbose=True):
-    """
-    works only on linux
-    """
-    if self.datafile!='':
-
-        pdf_folder = summary_pdf_folder(self.datafile)
-        if os.path.isdir(pdf_folder):
-            PDFS = os.listdir(pdf_folder)
-            for pdf in PDFS:
-                print(' - opening: "%s"' % pdf)
-                os.system('$(basename $(xdg-mime query default application/pdf) .desktop) %s & ' % os.path.join(pdf_folder, pdf))
-        else:
-            print('no PDF summary files found !')
-
-    else:
-        print('\n \n Need to pick a datafile')
 
     
-def generate_pdf(self,
+def generate_pdf(args,
+                 filename=None,
                  debug=False,
                  verbose=True):
 
-    pdf = os.path.join(os.path.dirname(args.datafile).replace('NWBs', 'pdfs'),
-                       os.path.basename(args.datafile).replace('.nwb', '.pdf'))
+    if filename is None:
+        filename = os.path.join(os.path.dirname(args.datafile).replace('NWBs', 'pdfs'),
+                                os.path.basename(args.datafile).replace('.nwb', '.pdf'))
 
     fig = pt.plt.figure(figsize=(8.27, 11.7), dpi=75)
 
-    if self.datafile!='':
+    if args.datafile!='':
 
-        data = Data(self.datafile)
+        data = physion.analysis.read_NWB.Data(args.datafile)
 
         # metadata annotations:
         ax = pt.inset(fig, [0.07, 0.85, 0.4, 0.1])
         metadata_fig(ax, data)
 
         # FOVs:
-        AX = [pt.inset(fig, [0.42+i*0.17, 0.8, 0.16, 0.15]) for i in range(3)]
+        AX = [pt.inset(fig, [0.42+i*0.17, 0.82, 0.16, 0.15]) for i in range(3)]
         generate_FOV_fig(AX, data, args)
 
         # raw data full view:
-        ax = pt.inset(fig, [0.07, 0.6, 0.84, 0.2])
+        ax = pt.inset(fig, [0.07, 0.625, 0.84, 0.2])
         generate_raw_data_figs(data, ax, args)
 
         # protocol-specific plots
-        getattr(protocols,
-                data.metadata['protocol'].replace('-', '_')).plot(fig,data,args)
+        try:
+            getattr(physion.analysis.protocols,
+                    data.metadata['protocol'].replace('-', '_')).plot(fig, data, args)
+        except BaseException as be:
+            print()
+            print()
+            print(be)
+            print(' [!!] protocol-specific analysis failed for "%s"' % args.datafile)
+            print('        protocol = %s' % data.metadata['protocol'])
 
     else:
         print('\n \n Need to pick a datafile')
@@ -95,16 +53,23 @@ def generate_pdf(self,
     if debug:
         pt.plt.show()
     else:
-        fig.savefig(pdf, dpi=300)
+        fig.savefig(filename, dpi=300)
 
 def metadata_fig(ax, data, short=True):
     
     s=' [-- **   %s   ** --] ' % data.filename
     pt.annotate(ax, s, (0,1), va='top', fontsize=8, bold=True)
 
-    s = '\n \n'
-    for key in ['protocol', 'subject_ID', 'notes', 'FOV']:
-        s+='- %s :\n    "%s" \n' % (key, data.metadata[key])
+    s = '\n \n '
+    s+= ' %s ' % data.metadata['subject_ID']
+    if hasattr(data, 'age'):
+        s += ' -- P%i \n \n' % data.age
+    else:
+        s += ' \n \n'
+    s+='- %s \n' % data.metadata['protocol']
+    for key in ['notes', 'FOV']:
+        if key in data.metadata:
+            s+='- %s : "%s" \n' % (key, data.metadata[key])
 
     s += '- completed:\n       n=%i/%i episodes' %(data.nwbfile.stimulus['time_start_realigned'].data.shape[0],
                                                    data.nwbfile.stimulus['time_start'].data.shape[0])
@@ -133,15 +98,16 @@ def metadata_fig(ax, data, short=True):
 
 def generate_FOV_fig(AX, data, args):
 
-    show_CaImaging_FOV(data,key='meanImg',
-                       ax=AX[0],NL=4,with_annotation=False)
-    show_CaImaging_FOV(data, key='max_proj', 
-                       ax=AX[1], NL=3, with_annotation=False)
-    show_CaImaging_FOV(data, key='meanImg', 
-                       ax=AX[2], NL=4, with_annotation=False,
+    physion.dataviz.imaging.show_CaImaging_FOV(\
+            data,key='meanImg', ax=AX[0],NL=4,with_annotation=False)
+    physion.dataviz.imaging.show_CaImaging_FOV(\
+            data, key='max_proj', ax=AX[1], NL=4, with_annotation=False)
+    physion.dataviz.imaging.show_CaImaging_FOV(\
+            data, key='meanImg', ax=AX[2], NL=4, with_annotation=False,
                        roiIndices=np.arange(data.nROIs))
-    for ax, title in zip(AX, ['meanImg', 'max_proj', 'n=%i ROIs' % data.nROIs]):
-        ax.set_title(title, fontsize=6)
+
+    for ax, title in zip(AX, ['meanImg', 'max_proj', 'n=%i ROIs'%data.nROIs]):
+        pt.annotate(ax, title, (0.5, .95), va='top', ha='center', fontsize=7)
         ax.axis('off')
 
 
@@ -159,6 +125,7 @@ def generate_raw_data_figs(data, ax, args,
 
     nROIs = data.nROIs
     args.imaging_quantity = 'dFoF'
+    data.build_dFoF()
 
     if not hasattr(args, 'nROIs'):
         args.nROIs = np.min([12, nROIs])
@@ -179,7 +146,7 @@ def generate_raw_data_figs(data, ax, args,
                                                     np.min([12, data.nROIs]), 
                                                 replace=False))
 
-    plot_raw(data, data.tlim, 
+    physion.dataviz.raw.plot(data, data.tlim, 
               settings=settings, Tbar=30, ax=ax)
 
     ax.annotate('full recording: %.1fmin  ' % ((data.tlim[1]-data.tlim[0])/60), (1,1), 
@@ -224,6 +191,50 @@ def summary_fig(CELL_RESPS):
     return fig
 
 
+# def summary_pdf_folder(filename):
+
+    # folder = os.path.join(os.path.dirname(filename),
+            # 'pdfs', os.path.basename(filename).replace('.nwb', ''))
+    # pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
+
+    # return folder
+
+# def join_pdf(PAGES, pdf):
+    # """
+    # Using PDFTK, only on linux for now
+    # """
+    # cmd = '/usr/bin/pdftk ' 
+    # for page in PAGES:
+        # cmd += '%s '%page
+    # cmd += 'cat output %s' % pdf
+
+    # subprocess.Popen(cmd,
+                     # shell=True,
+                     # stdout=subprocess.PIPE,
+                     # stderr=subprocess.STDOUT)
+
+
+# def open_pdf(args,
+             # Nmax=1000000,
+             # include=['exp', 'raw', 'behavior', 'rois', 'protocols'],
+             # verbose=True):
+    # """
+    # works only on linux
+    # """
+    # if args.datafile!='':
+
+        # pdf_folder = summary_pdf_folder(args.datafile)
+        # if os.path.isdir(pdf_folder):
+            # PDFS = os.listdir(pdf_folder)
+            # for pdf in PDFS:
+                # print(' - opening: "%s"' % pdf)
+                # os.system('$(basename $(xdg-mime query default application/pdf) .desktop) %s & ' % os.path.join(pdf_folder, pdf))
+        # else:
+            # print('no PDF summary files found !')
+
+    # else:
+        # print('\n \n Need to pick a datafile')
+
 if __name__=='__main__':
     
     import argparse
@@ -241,16 +252,17 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-
     if os.path.isdir(args.datafile):
         directory = args.datafile
-        for f in get_files_with_extension(directory,
+        for f in physion.utils.files.get_files_with_extension(directory,
                                           extension='.nwb', recursive=True):
             args.datafile = f
-            generate_pdf(args)
+            generate_pdf(args, debug=args.verbose)
 
     elif '.nwb' in args.datafile:
-        generate_pdf(args)
+        data = physion.analysis.read_NWB.Data(args.datafile)
+        print(data.protocols)
+        generate_pdf(args, debug=args.verbose)
 
     else:
         print()

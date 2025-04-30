@@ -1,6 +1,7 @@
 import sys, time, os, pathlib, string, itertools
 
 import numpy as np
+from scipy.stats import sem
 from scipy.interpolate import interp1d
 
 from physion.analysis import stat_tools
@@ -319,8 +320,10 @@ class EpisodeData:
         self.quantities = QUANTITIES
 
 
-
-    def get_response(self, quantity=None, roiIndex=None, roiIndices='all', average_over_rois=True):
+    def get_response(self, 
+                     quantity=None, 
+                     roiIndex=None, roiIndices='all', 
+                     average_over_rois=True):
         """
         to deal with the fact that single-episode responses can be multidimensional
 
@@ -462,14 +465,18 @@ class EpisodeData:
                                                    .5*(x[1:]+x[:-1]),
                                                    [x[-1]+.5*(x[-1]-x[-2])]]))
 
-        summary_data = {'value':[], 'std-value':[], 'significant':[], 'relative_value':[]}
+        summary_data = {'value':[], 'std-value':[], 'sem-value':[], 
+                        'significant':[], 'relative_value':[]}
+
         for key, bins in zip(VARIED_KEYS, VARIED_BINS):
             summary_data[key] = []
             summary_data[key+'-index'] = []
             summary_data[key+'-bins'] = bins
 
         if len(VARIED_KEYS)>0:
+
             for indices in itertools.product(*VARIED_INDICES):
+
                 stats = self.stat_test_for_evoked_responses(episode_cond=self.find_episode_cond(VARIED_KEYS,
                                                                                                 list(indices)) &\
                                                                           episode_cond,
@@ -483,25 +490,31 @@ class EpisodeData:
                 if stats.r!=0:
                     summary_data['value'].append(np.mean(stats.y-stats.x))
                     summary_data['std-value'].append(np.std(stats.y-stats.x))
+                    summary_data['sem-value'].append(sem(stats.y-stats.x))
                     if np.sum(stats.x==0)==0:
                         summary_data['relative_value'].append(np.mean((stats.y-stats.x)/stats.x))
                     else:
                         summary_data['relative_value'].append(np.nan) # if one of them is 0, all to Nan so that it's unusable
                     summary_data['significant'].append(stats.significant(threshold=response_significance_threshold))
                 else:
-                    for kk in ['value', 'std-value', 'significant', 'relative_value']:
+                    for kk in ['value', 'std-value', 'sem-value', 
+                               'significant', 'relative_value']:
                         summary_data[kk].append(np.nan)
         else:
+
             stats = self.stat_test_for_evoked_responses(response_args=response_args,
                                                         **stat_test_props)
+
             # if (stats.x is not None) and (stats.y is not None):
             if stats.r!=0:
                 summary_data['value'].append(np.mean(stats.y-stats.x))
                 summary_data['std-value'].append(np.std(stats.y-stats.x))
+                summary_data['sem-value'].append(sem(stats.y-stats.x))
                 summary_data['significant'].append(stats.significant(threshold=response_significance_threshold))
                 summary_data['relative_value'].append(np.mean((stats.y-stats.x)/stats.x))
             else:
-                for kk in ['value', 'std-value', 'significant', 'relative_value']:
+                for kk in ['value', 'std-value', 'sem-value',
+                           'significant', 'relative_value']:
                     summary_data[kk].append(np.nan)
 
         for key in summary_data:
@@ -532,3 +545,22 @@ class EpisodeData:
         for key in self.visual_stim.experiment:
             if hasattr(self, key):
                 self.visual_stim.experiment[key] = getattr(self, key)
+
+
+
+if __name__=='__main__':
+
+    import physion
+
+    filename = sys.argv[-1]
+    data= physion.analysis.read_NWB.Data(filename)
+    data.build_dFoF()
+    Episodes = EpisodeData(data, quantities=['dFoF'], protocol_id=2)
+    for ia, angle in enumerate(Episodes.varied_parameters['angle']):
+        ep_cond = Episodes.find_episode_cond('angle', ia)
+        stats = Episodes.stat_test_for_evoked_responses(\
+                                episode_cond=ep_cond,
+                                response_args={'quantity':'dFoF', 
+                                               'roiIndex':3})
+        print(ia, angle, stats.significant())
+

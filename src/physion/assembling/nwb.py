@@ -7,21 +7,19 @@ from hdmf.data_utils import DataChunkIterator
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from dateutil.tz import tzlocal
 
-from physion.acquisition.tools import get_subject_props
-
-from physion.assembling.realign_from_photodiode import realign_from_photodiode
-from physion.assembling.dataset import read_dataset_spreadsheet,\
-        read_metadata
-from physion.assembling.subject import build_subject_props
 from physion.behavior.locomotion import compute_speed
 from physion.analysis.tools import resample_signal
-from physion.assembling.tools import load_FaceCamera_data,\
-        build_subsampling_from_freq, StartTime_to_day_seconds
-from physion.assembling.add_ophys import add_ophys
 from physion.utils.paths import python_path
 from physion.visual_stim.build import build_stim as build_visualStim
 
 from physion.utils.camera import CameraData
+
+from .subject import reformat_props, cleanup_keys, subject_template
+from .add_ophys import add_ophys
+from .realign_from_photodiode import realign_from_photodiode
+from .dataset import read_dataset_spreadsheet, read_metadata
+from .tools import load_FaceCamera_data,\
+        build_subsampling_from_freq, StartTime_to_day_seconds
 
 ALL_MODALITIES = ['raw_CaImaging', 'processed_CaImaging',
                   'raw_FaceCamera', 'Pupil', 'FaceMotion',
@@ -30,7 +28,7 @@ ALL_MODALITIES = ['raw_CaImaging', 'processed_CaImaging',
                   'Locomotion'] 
 
 
-def build_NWB_func(args):
+def build_NWB_func(args, Subject=None):
     """
     """
     if args.verbose:
@@ -76,30 +74,26 @@ def build_NWB_func(args):
     start_time = datetime.datetime(*day, *Time, tzinfo=tzlocal())
 
     # --------------------------------------------------------------
-    # subject info -- empty by default
+    #                       subject info 
     # --------------------------------------------------------------
 
-    subject_props = build_subject_props(args, metadata)
+    if Subject is not None:
+        subject_props = reformat_props(Subject, debug=args.verbose)
+        cleanup_keys(subject_props, metadata, debug=args.verbose)
+    else:
+        subject_props = subject_template.copy()
 
     # --------------------------------------------------------------
     #    ---------  building the pynwb subject object   ----------
     # --------------------------------------------------------------
-    subject = pynwb.file.Subject(description=\
-        (subject_props['description'] if ('description' in subject_props) else ''),
-                                 age=\
-        ('P%iD' % subject_props['age'] if ('age' in subject_props) else ''),
-                                 subject_id=\
-        (subject_props['subject_id'] if ('subject_id' in subject_props) else 'Unknown'),
-                                 sex=\
-        (subject_props['sex'] if ('sex' in subject_props) else 'Unknown'),
-                                 genotype=\
-        (subject_props['genotype'] if ('genotype' in subject_props) else 'Unknown'),
-                                 species=\
-        (subject_props['species'] if ('species' in subject_props) else 'Unknown'),
-                                 weight=\
-        (subject_props['weight'] if ('weight' in subject_props) else 'Unknown'),
-                                 strain=\
-        (subject_props['strain'] if ('strain' in subject_props) else 'Unknown'),
+    subject = pynwb.file.Subject(description=subject_props['description'],
+                                 age=subject_props['age'],
+                                 subject_id=subject_props['subject_id'],
+                                 sex=subject_props['sex'],
+                                 genotype=subject_props['genotype'],
+                                 species=subject_props['species'],
+                                 weight=subject_props['weight'],
+                                 strain=subject_props['strain'],
                                  date_of_birth=\
         datetime.datetime(*subject_props['Date-of-Birth'], tzinfo=tzlocal()))
                                  
@@ -111,17 +105,18 @@ def build_NWB_func(args):
                 identifier=identifier,
                 session_description=str(metadata),
                 experiment_description=metadata['protocol'],
-                experimenter=(metadata['experimenter'] if ('experimenter' in metadata) else 'Unknown'),
-                lab=(metadata['lab'] if ('lab' in metadata) else 'Unknown'),
-                institution=(metadata['institution'] if ('institution' in metadata) else 'Unknown'),
-                notes=(metadata['notes'] if ('notes' in metadata) else ''),
-                virus=(subject_props['virus'] if ('virus' in subject_props) else 'Unknown'),
-                surgery=(subject_props['surgery'] if ('surgery' in subject_props) else 'Unknown'),
+                experimenter=metadata['experimenter'],
+                lab=metadata['lab'],
+                institution=metadata['institution'],
+                notes=metadata['notes'],
+                virus=subject_props['virus'],
+                surgery=subject_props['surgery'],
                 session_start_time=start_time,
                 subject=subject,
                 source_script=str(pathlib.Path(__file__).resolve()),
                 source_script_file_name=str(pathlib.Path(__file__).resolve()),
-                file_create_date=datetime.datetime.now(datetime.UTC).replace(tzinfo=tzlocal()))
+                file_create_date=\
+                   datetime.datetime.now(datetime.UTC).replace(tzinfo=tzlocal()))
 
     if not hasattr(args, 'filename') or args.filename=='':
         if args.destination_folder=='':
@@ -642,6 +637,8 @@ if __name__=='__main__':
     parser.add_argument("--silent", action="store_true")
     parser.add_argument('-v', "--verbose", action="store_true")
     parser.add_argument('-R', "--recursive", action="store_true")
+    parser.add_argument('-fi', "--files_indices", 
+                        default=[0, 10000], nargs=2, type=int)
 
     args = parser.parse_args()
 
@@ -655,18 +652,21 @@ if __name__=='__main__':
     if '.xlsx' in args.datafolder:
 
         filename, directory = args.datafolder, os.path.dirname(args.datafolder)
-        dataset = read_dataset_spreadsheet(filename)
+        dataset, subjects, _ = read_dataset_spreadsheet(filename)
         args.destination_folder = os.path.join(directory, 'NWBs')
-        for i in range(len(dataset)):
+        for i in np.arange(args.files_indices[0], 
+                           min([len(dataset)+1, args.files_indices[1]])):
             print('\n \n     [%i] -- %s \n ' % (i+1,dataset['datafolder'][i]))
+
+            # subject information:
+            Subject = subjects[\
+                            subjects['subject']==dataset['subject'].values[i]\
+                                    ].to_dict('records')[0]
+
             # resetting the datafodler
             args.datafolder = dataset['datafolder'][i]
             args.filename = ''
-            # copy the subject file 
-            shutil.copyfile(os.path.join(directory, 'subjects', 
-                                     '%s.xlsx' % dataset['subject'].values[i]),
-                            os.path.join(args.datafolder,
-                                     '%s.xlsx' % dataset['subject'].values[i]))
+
             # building the options
             for key in ['force_to_visualStimTimestamps',
                         'reverse_photodiodeSignal']:
@@ -677,11 +677,13 @@ if __name__=='__main__':
             for key in ALL_MODALITIES: 
                 if dataset[key].values[i]=='Yes':
                     args.modalities.append(key)
+
             # run the build:
-            build_NWB_func(args)
+            build_NWB_func(args, Subject=Subject)
         
     elif args.recursive:
 
+        i = -1
         for f, _, __ in os.walk(args.datafolder):
         #for f, _, __ in os.walk(os.path.join(args.datafolder)):
 
@@ -702,20 +704,24 @@ if __name__=='__main__':
 
             if (len(timeFolder.split('-'))==3) and \
                     (len(dateFolder.split('_'))==3):
-                print(' processing "%s" [...] ' % f)
-                args.datafolder = f
-                args.filename = ''
-                if args.only_protocol!='':
-                    # we check that it matches the protocol
-                    metadata = read_metadata(args.datafolder)
-                    if args.only_protocol in metadata['protocol']:
-                        build_NWB_func(args)
+                i+=1
+                if (i>=args.files_indices[0]) and (i<=args.files_indices[1]):
+                    print()
+                    print(' [ %i ]  processing "%s" [...] ' % (i,f))
+                    args.datafolder = f
+                    args.filename = ''
+                    if args.only_protocol!='':
+                        # we check that it matches the protocol
+                        metadata = read_metadata(args.datafolder)
+                        if args.only_protocol in metadata['protocol']:
+                            build_NWB_func(args)
+                        else:
+                            print('')
+                            print('  [!!]  ignoring:', f, ' of protocol', 
+                                  metadata['protocol'])
+                            print('')
                     else:
-                        print('')
-                        print('  [!!]  ignoring:', f, ' of protocol', metadata['protocol'])
-                        print('')
-                else:
-                    build_NWB_func(args)
+                        build_NWB_func(args)
 
     elif os.path.isdir(args.datafolder) and (\
                 ('metadata.npy' in os.listdir(args.datafolder)) or
