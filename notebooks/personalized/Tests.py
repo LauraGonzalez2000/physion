@@ -194,7 +194,7 @@ for index in range(len(SESSIONS['files'])):
         r_sq_s.append(r_sq)
     
     r_sq_s_all.append(r_sq_s)
-    
+
 
 # %% jupyter={"outputs_hidden": true}
 plt.figure(figsize=(10, 5))
