@@ -31,7 +31,8 @@ class CameraData:
         self.name = name
         self.folder = folder
         # empty init by default
-        self.times, self.cap, self.nFrames = [], None, 0
+        self.times, self.original_times = [], []
+        self.cap, self.nFrames = None, 0
         self.FRAMES, self.FILES = None, None
 
         if os.path.isdir(\
@@ -137,9 +138,15 @@ class CameraData:
                               allow_pickle=True).item()
 
             self.original_times = summary['times']
-            self.nFrames = len(summary['sample_frames'])
-            self.times = summary['times'][summary['sample_frames_index']]
-            self.FRAMES = summary['sample_frames'] 
+            if 'sample_frames' in summary:
+                self.nFrames = len(summary['sample_frames'])
+                self.times = summary['times'][summary['sample_frames_index']]
+                self.FRAMES = summary['sample_frames'] 
+            else:
+                self.nFrames = 1
+                self.times = np.array([summary['times'][0]])
+                self.FRAMES = [np.zeros(summary['resolution'])]
+                    
 
         else:
             print('')
