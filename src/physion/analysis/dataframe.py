@@ -74,11 +74,6 @@ def NWB_to_dataframe(nwbfile,
         #vRois
         dataframe.nROIs = data.nROIs
 
-<<<<<<< HEAD
-=======
-        dataframe.nROIs = data.nROIs
-
->>>>>>> 5d6d5b7495f1d2b69a3bf11445656c75a7702747
         for i in range(data.nROIs):
 
             dFoF = data.dFoF[i,:]
