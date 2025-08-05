@@ -4,44 +4,14 @@ import physion.utils.plot_tools as pt
 from physion.dataviz.raw import plot as plot_raw
 from physion.analysis.process_NWB import EpisodeData
 from physion.dataviz.episodes.trial_average import plot as plot_trial_average
+from .contrast_sensitivity import compute_sensitivity_per_cells
 
 stat_test = dict(interval_pre=[-1.5,-0.5],
                  interval_post=[0.5,1.5],
                  test='anova',
                  positive=True)
-response_significance_threshold=0.05
 
-def responsiveness(data,
-                   response_significance_threshold=\
-                        response_significance_threshold):
-
-    episodes = EpisodeData(data,
-                           quantities=['dFoF'],
-                           prestim_duration=3,
-                           verbose=True)
-
-    responsive = {}
-    for contrast in [0.5, 1.0]:
-
-        responsive['c=%.1f' % contrast] = []
-        episode_cond = (episodes.contrast==contrast)
-
-        for roi in range(data.nROIs):
-
-            summary_data = episodes.compute_summary_data(\
-                         stat_test,
-                         episode_cond=episode_cond,
-                         response_args={'quantity':'dFoF',
-                                        'roiIndex':roi},
-                         response_significance_threshold=\
-                                    response_significance_threshold)
-
-
-            summary_cond = summary_data['contrast']==contrast
-            if np.sum(summary_data['significant'][summary_cond])>0:
-                responsive['c=%.1f'%contrast].append(roi)
-
-    return episodes, responsive
+response_significance_threshold=0.01
 
 
 def zoom_view(ax, data, args, tlim=[300,420]):
@@ -76,57 +46,79 @@ def zoom_view(ax, data, args, tlim=[300,420]):
 def plot(fig, data, args, 
          stat_test=stat_test):
 
-    ax = pt.inset(fig, [0.07, 0.38, 0.84, 0.2])
+    Episodes = EpisodeData(data,
+                           quantities=['dFoF'],
+                           prestim_duration=3,
+                           verbose=True)
+
+    ax = pt.inset(fig, [0.07, 0.41, 0.84, 0.2])
     zoom_view(ax, data, args)
 
-    episodes, responsive = responsiveness(data)
     
-    AX = [[pt.inset(fig, [0.06+i*0.11, 0.25+0.07*j, 0.1, 0.06])\
+    AX = [[pt.inset(fig, [0.06+i*0.11, 0.28+0.07*j, 0.1, 0.06])\
             for i in range(8)] for j in range(2)]
     
-    plot_trial_average(episodes,
-                       row_key='contrast',
-                       column_key='angle',
+    plot_trial_average(Episodes,
+                       row_key='angle',
+                       column_key='contrast',
                        with_annotation=True, 
                        Xbar=1, Xbar_label='1s', 
-                       Ybar=0.1, Ybar_label='0.1$\Delta$F/F',
-                       color='k',
+                       Ybar=0.1, Ybar_label='0.1$\\Delta$F/F',
                        with_screen_inset=True,
                        with_std_over_rois=True,
                        AX=AX)
 
+    pt.annotate(AX[0][0], '\n'+str(stat_test)+\
+        ', p=%.3f\n' % response_significance_threshold, (0,0), va='top', fontsize=6)
 
-    for c, contrast in enumerate([0.5, 1.0]):
-        ax = pt.inset(fig, [0.08, 0.03+0.1*c, 0.12, 0.07])
-        r = len(responsive['c=%.1f' % contrast])/data.nROIs
+    for c, angle in enumerate([0, 90]):
+        ax = pt.inset(fig, [0.08, 0.16+0.04*c, 0.12, 0.04])
+
+        resp = compute_sensitivity_per_cells(data, Episodes,
+                                             stat_test,
+                                             angle=angle,
+                                             response_significance_threshold=\
+                                                response_significance_threshold/8.) # adjusted for multiple comp.
+
+        r = np.sum(resp['significant_ROIs'])/data.nROIs
         pt.pie([100*r, 100*(1-r)],
            COLORS=['green', 'lightcoral'], ax=ax)
-        pt.annotate(ax, 'c=%.1f \n  %.1f%%\n  (n=%i)'%(\
-                    contrast, 100*r, len(responsive['c=%.1f' % contrast])),
-                    (0,1), va='top', ha='right')
+        pt.annotate(ax, 'a=%.1f$^o$ \n  %.1f%%\n  (n=%i)'%(\
+                    angle, 100*r, np.sum(resp['significant_ROIs'])),
+                    (0,1), va='top', ha='right', fontsize=7)
+
+        if len(resp['Responses'])>0:
+
+            ax2 = pt.inset(fig, [0.08, 0.06+0.05*c, 0.1, 0.045])
+
+            pt.plot(resp['contrast'], np.mean(resp['Responses'], axis=0),
+                    color='tab:red' if c==0 else 'tab:blue',
+                    sy = np.std(resp['Responses'], axis=0), ax=ax2, no_set=True)
+            pt.set_plot(ax2, xticks_labels=[] if c==1 else None, ylabel='$\\Delta$F/F')
+            pt.annotate(ax2, 'a=%.1f$^o$' % angle, (1,0.5), va='center', 
+                    color='tab:red' if c==0 else 'tab:blue',
+                        rotation=90, fontsize=7)
 
     pt.annotate(ax, 'responsiveness\n n=%i ROIs' % data.nROIs,
                 (0.5, 1), ha='center')
 
     for j, n in enumerate(np.random.choice(data.nROIs, 
-                                           np.min([7, data.nROIs]), 
+                                           np.min([8, data.nROIs]), 
                                            replace=False)):
 
-        AX = [[pt.inset(fig, [0.22+i*0.085, 0.03+0.026*j, 0.09, 0.03])\
+        AX = [[pt.inset(fig, [0.22+i*0.085, 0.035+0.026*j, 0.09, 0.03])\
                 for i in range(8)]]
         
-        plot_trial_average(episodes, roiIndex=n,
-                           color_key='contrast',
-                           column_key='angle',
+        plot_trial_average(Episodes, roiIndex=n,
+                           color_key='angle',
+                           column_key='contrast',
                            Xbar=1, Xbar_label='1s', 
-                           Ybar=0.1, Ybar_label='0.1$\Delta$F/F',
+                           Ybar=0.1, Ybar_label='0.1$\\Delta$F/F',
                            with_std=False,
                            with_stat_test=True,
                            stat_test_props=stat_test,
-                           color=['lightgrey', 'dimgrey'],
+                           color=['tab:red', 'tab:blue'],
                            AX=AX)
 
-        pt.annotate(AX[-1][-1], 'roi #%i' % n, (1,0.5), va='center',
-                    color='tab:green' if n in responsive['c=1.0'] else 'lightcoral')
-
-    
+        pt.annotate(AX[-1][-1], 'roi #%i' % n, (1,0.5), va='center')
+        # color='tab:green' if n in responsive['c=1.0'] else 'lightcoral')

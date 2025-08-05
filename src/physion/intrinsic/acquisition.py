@@ -8,39 +8,12 @@ from dateutil.tz import tzlocal
 #################################################
 ###        Select the Camera Interface    #######
 #################################################
-CameraInterface = None
-### --------- MicroManager Interface -------- ###
-try:
-    from pycromanager import Core
-    CameraInterface = 'MicroManager'
-except ModuleNotFoundError:
-    pass
-
-### ------------ ThorCam Interface ---------- ###
-if CameraInterface is None:
-    try:
-        absolute_path_to_dlls= os.path.join(os.path.expanduser('~'),
-                            'work', 'physion', 'src', 'physion',
-                            'hardware', 'Thorlabs', 'camera_dlls')
-        os.environ['PATH'] = absolute_path_to_dlls + os.pathsep +\
-                                                    os.environ['PATH']
-        os.add_dll_directory(absolute_path_to_dlls)
-        CameraInterface = 'ThorCam'
-        from thorlabs_tsi_sdk.tl_camera import TLCameraSDK
-    except (AttributeError, ModuleNotFoundError):
-        pass
-### --------- None -> demo mode ------------- ###
-if CameraInterface is None:
-    print('------------------------------------')
-    print('   camera support not available !')
-    print('------------------------------------')
+from physion.intrinsic.load_camera import *
 
 #################################################
 ###        Now set up the Acquisition     #######
 #################################################
-
 from physion.utils.paths import FOLDERS
-from physion.visual_stim.screens import SCREENS
 from physion.acquisition.settings import get_config_list, update_config
 from physion.visual_stim.main import visual_stim
 from physion.visual_stim.show import init_stimWindow
@@ -48,26 +21,16 @@ from physion.intrinsic.tools import resample_img
 from physion.utils.files import generate_filename_path
 from physion.acquisition.tools import base_path
 
-camera_depth = 12
-
-def init_thorlab_cam(self):
-    self.sdk = TLCameraSDK()
-    self.cam = self.sdk.open_camera(self.sdk.discover_available_cameras()[0])
-    # for software trigger
-    self.cam.frames_per_trigger_zero_for_unlimited = 0
-    self.cam.operation_mode = 0
-    print('\n [ok] Thorlabs Camera successfully initialized ! \n')
-    self.demo = False
-
-def close_thorlab_cam(self):
-    self.cam.dispose()
-    self.sdk.dispose()
 
 def gui(self,
         box_width=250,
         tab_id=0):
 
     self.windows[tab_id] = 'ISI_acquisition'
+    self.movie_folder = os.path.join(os.path.expanduser('~'),
+                                     'work', 'physion', 'src',
+         	                         'physion', 'acquisition', 'protocols',
+                                     'movies', 'intrinsic')
 
     tab = self.tabs[tab_id]
 
@@ -126,8 +89,8 @@ def gui(self,
     # subject box
     self.add_side_widget(tab.layout, QtWidgets.QLabel('subject:'),
                          spec='small-left')
-    self.subjectBox = QtWidgets.QComboBox(self)
-    self.subjectBox.activated.connect(self.update_subject)
+    self.subjectBox = QtWidgets.QLineEdit(self)
+    self.subjectBox.setText('demo-Mouse')
     self.add_side_widget(tab.layout, self.subjectBox, spec='large-right')
     
     get_config_list(self)
@@ -244,10 +207,10 @@ def gui(self,
 
 def take_fluorescence_picture(self):
 
-    if (self.folderBox.currentText()!='') and (self.subjectBox.currentText()!=''):
+    if (self.folderBox.currentText()!=''):
 
         filename = generate_filename_path(FOLDERS[self.folderBox.currentText()],
-                            filename='fluorescence-%s' % self.subjectBox.currentText(),
+                            filename='fluorescence-%s' % self.subjectBox.text(),
                             extension='.tif')
         
         if self.cam is not None:
@@ -276,10 +239,10 @@ def take_fluorescence_picture(self):
 
 def take_vasculature_picture(self):
 
-    if (self.folderBox.currentText()!='') and (self.subjectBox.currentText()!=''):
+    if (self.folderBox.currentText()!=''):
 
         filename = generate_filename_path(FOLDERS[self.folderBox.currentText()],
-                            filename='vasculature-%s' % self.subjectBox.currentText(),
+                            filename='vasculature-%s' % self.subjectBox.text(),
                             extension='.tif')
         
         if self.cam is not None:
@@ -435,12 +398,9 @@ def initialize_stimWindow(self):
         
     # re-initializing
     protocol = self.STIM['label'][self.iEp%len(self.STIM['label'])]
-    self.stim.movie_file = os.path.join(os.path.expanduser('~'),
-                                        'work', 'physion', 'src',
-         	                  'physion', 'acquisition', 'protocols',
-        'movies', 'intrinsic', 'flickering-bars-period%ss' % self.periodBox.currentText(),
-            '%s.wmv' % protocol)
-
+    self.stim.movie_file = os.path.join(self.movie_folder,
+                                        'flickering-bars-period%ss' % self.periodBox.currentText(),
+                                        '%s.wmv' % protocol)
     init_stimWindow(self)
 
     self.mediaPlayer.play()
@@ -483,15 +443,8 @@ def save_intrinsic_metadata(self):
             FOLDERS[self.folderBox.currentText()],
             filename='metadata', extension='.json')
 
-    # subject information copied to the recording folder
-    shutil.copy(\
-            os.path.join(base_path, 'subjects',
-                         self.config['subjects_folder'],
-                         '%s.xlsx' % self.subjectBox.currentText()),
-                filename.replace('metadata.json',
-                         '%s.xlsx' % self.subjectBox.currentText()))
 
-    metadata = {'subject':str(self.subjectBox.currentText()),
+    metadata = {'subject':str(self.subjectBox.text()),
                 'exposure':str(self.exposure),
                 'acq-freq':str(self.freqBox.text()),
                 'period':str(self.periodBox.currentText()),
@@ -571,7 +524,7 @@ def stop_intrinsic(self):
 
 def get_frame(self, force_HQ=False):
     
-    if self.exposure>0 and (CameraInterface=='MicroManager'):
+    if self.exposure>0 and (CameraInterface=='MicroManager') and self.camBox.isChecked():
 
         self.core.snap_image()
         tagged_image = self.core.get_tagged_image()
@@ -580,7 +533,7 @@ def get_frame(self, force_HQ=False):
                          newshape=[tagged_image.tags['Height'],
                                    tagged_image.tags['Width']])
 
-    elif (CameraInterface=='ThorCam'):
+    elif (CameraInterface=='ThorCam') and self.camBox.isChecked():
 
         frame = self.cam.get_pending_frame_or_null()
         while frame is None:
@@ -591,22 +544,22 @@ def get_frame(self, force_HQ=False):
 
         it = int((time.time()-self.t0_episode)/self.dt)%int(self.period/self.dt)
         protocol = self.STIM['label'][self.iEp%len(self.STIM['label'])]
-        if protocol=='left':
-            img = np.random.randn(*self.stim.x.shape)+\
-                np.exp(-(self.stim.x-(40*it/self.Npoints-20))**2/2./10**2)*\
-                np.exp(-self.stim.z**2/2./15**2)
-        elif protocol=='right':
-            img = np.random.randn(*self.stim.x.shape)+\
-                np.exp(-(self.stim.x+(40*it/self.Npoints-20))**2/2./10**2)*\
-                np.exp(-self.stim.z**2/2./15**2)
-        elif protocol=='up':
+        if 'up' in protocol:
             img = np.random.randn(*self.stim.x.shape)+\
                 np.exp(-(self.stim.z-(40*it/self.Npoints-20))**2/2./10**2)*\
                 np.exp(-self.stim.x**2/2./15**2)
-        else: # down
+        elif 'down' in protocol: # down
             img = np.random.randn(*self.stim.x.shape)+\
                 np.exp(-(self.stim.z+(40*it/self.Npoints-20))**2/2./10**2)*\
                 np.exp(-self.stim.x**2/2./15**2)
+        elif 'left' in protocol:
+            img = np.random.randn(*self.stim.x.shape)+\
+                np.exp(-(self.stim.x-(40*it/self.Npoints-20))**2/2./10**2)*\
+                np.exp(-self.stim.z**2/2./15**2)
+        elif 'right' in protocol:
+            img = np.random.randn(*self.stim.x.shape)+\
+                np.exp(-(self.stim.x+(40*it/self.Npoints-20))**2/2./10**2)*\
+                np.exp(-self.stim.z**2/2./15**2)
 
         img = img.T+.2*(time.time()-self.t0_episode)/10. # + a drift term
         img = 2**12*(img-img.min())/(img.max()-img.min())

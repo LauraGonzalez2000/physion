@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets
 
 Acquisition = ('acquisition' in sys.argv) or ('all' in sys.argv)
 Intrinsic = ('all' in sys.argv) or ('intrinsic' in sys.argv)
+OD = ('all' in sys.argv) or ('OD' in sys.argv)
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -30,7 +31,7 @@ class MainWindow(QtWidgets.QMainWindow):
         from physion.gui.calendar import calendar, pick_date,\
                 reinit_calendar, pick_subject, scan_folder,\
                 pick_datafile, show_metadata 
-        from physion.analysis.summary_pdf import generate_pdf, open_pdf
+        # from physion.analysis.summary_pdf import generate_pdf, open_pdf
     else:
         from physion.gui.parts import inactivated as calendar 
 
@@ -56,11 +57,11 @@ class MainWindow(QtWidgets.QMainWindow):
     else:
         from physion.gui.parts import inactivated as multimodal
 
-    if Acquisition or Intrinsic:
+    if Acquisition or Intrinsic or OD:
         from physion.acquisition.tools import save_experiment,\
             set_filename_and_folder
         from physion.acquisition.settings import update_config,\
-            update_subject, save_settings
+            save_settings
 
 
     # -- Intrinsic Imaging -- acquisition
@@ -74,27 +75,37 @@ class MainWindow(QtWidgets.QMainWindow):
         from physion.intrinsic.somatosensory import gui as SS_intrinsic_acq
         from physion.intrinsic.somatosensory import launch_SS_intrinsic,\
                 stop_SS_intrinsic, update_dt_SS_intrinsic
+    elif OD:
+        from physion.intrinsic.ocular_dominance import gui as intrinsic_acq
+        from physion.intrinsic.ocular_dominance import launch_intrinsic,\
+                stop_intrinsic, live_intrinsic, update_dt_intrinsic,\
+                take_vasculature_picture, take_fluorescence_picture
+        from physion.gui.parts import inactivated as SS_intrinsic_acq
     else:
         from physion.gui.parts import inactivated as intrinsic_acq
         from physion.gui.parts import inactivated as SS_intrinsic_acq
 
     # -- Intrinsic Imaging -- analysis
-    # visual
+    # visual & somatosensory
     if not Acquisition:
+        # intrinsic
         from physion.intrinsic.analysis import gui as intrinsic
         from physion.intrinsic.analysis import open_intrinsic_folder,\
                 moved_pixels, load_intrinsic_data, compute_phase_maps,\
                 compute_retinotopic_maps, perform_area_segmentation,\
                 update_img1, update_img2, save_intrinsic, pdf_intrinsic,\
                 reset_ROI
-    else:
-        from physion.gui.parts import inactivated as intrinsic
-    # somatosensory
-    if not Acquisition:
+        # ocular dominance
+        from physion.intrinsic.ocular_dominance import analysis_gui\
+                as OD_analysis
+        from physion.intrinsic.ocular_dominance import calc_OD, save_OD
+        # somatosensory
         from physion.intrinsic.SS_analysis import gui as SS_intrinsic
         from physion.intrinsic.SS_analysis import load_SS_intrinsic_data,\
                 compute_SS_power_maps, save_SS_intrinsic
     else:
+        from physion.gui.parts import inactivated as intrinsic
+        from physion.gui.parts import inactivated as OD_analysis 
         from physion.gui.parts import inactivated as SS_intrinsic
 
     # -- FaceMotion tracking
@@ -258,6 +269,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.multimodal()
         elif ('intrinsic' in sys.argv):
             self.intrinsic_acq()
+        elif ('OD' in sys.argv):
+            self.intrinsic_acq()
         elif filename is not None:
             from physion.analysis.read_NWB import Data
             self.data = Data(filename)
@@ -296,6 +309,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.switch_roi_RCL()
         else:
             # ---- DEBUG interface ---- #
+            self.OD_analysis()
+            # self.lastBox.setChecked(False)
+            # self.datafolder = '/Users/yann/UNPROCESSED/CIBELE/2024_06_28/14-35-30'
+            self.load_intrinsic_data()
             # self.SS_intrinsic()
             # self.facemotion()
             # self.pupil()
@@ -314,10 +331,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # self.trial_averaging()
             # self.FOV()
             # self.multimodal()
-            self.intrinsic()
-            self.lastBox.setChecked(False)
-            self.datafolder = '/Users/yann/UNPROCESSED/CIBELE/2024_06_28/14-35-30'
-            # self.load_intrinsic_data()
+            # self.intrinsic()
 
     def refresh(self):
         tab_id = self.tabWidget.currentIndex()

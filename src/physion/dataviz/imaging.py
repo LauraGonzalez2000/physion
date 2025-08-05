@@ -42,10 +42,10 @@ def add_CaImagingRaster(data, tlim, ax, raster=None,
         else:
             raster = data.dFoF[roiIndices,:]
             
-        roiIndices = np.arange(data.iscell.sum())
+        roiIndices = np.arange(data.nROIs)
 
     elif (type(roiIndices)==str) and (roiIndices=='all') and (subquantity in ['dFoF', 'dF/F']):
-        roiIndices = np.arange(data.vNrois)
+        roiIndices = np.arange(data.nROIs)
         
     if normalization in ['per line', 'per-line', 'per cell', 'per-cell']:
         raster = np.array([(raster[i,:]-np.min(raster[i,:]))/(np.max(raster[i,:])-\
@@ -93,7 +93,8 @@ def add_CaImagingRaster(data, tlim, ax, raster=None,
 def add_CaImaging(data, tlim, ax,
                   fig_fraction_start=0., fig_fraction=1., color='green',
                   subquantity='Fluorescence', 
-                  roiIndices='all', dFoF_args={},
+                  roiIndices='all', 
+                  dFoF_args={},
                   scale_side='left',
                   vicinity_factor=1, 
                   subsampling=1, 
@@ -107,7 +108,7 @@ def add_CaImaging(data, tlim, ax,
         
     if (type(roiIndices)==str) and roiIndices=='all':
         roiIndices = data.valid_roiIndices
-        
+
     if color=='tab':
         COLORS = [plt.cm.tab10(n%10) for n in range(len(roiIndices))]
     else:
@@ -201,9 +202,12 @@ def add_CaImaging_mean(data, tlim, ax,
 
 def find_full_roi_coords(data, roiIndex):
 
-    indices = np.arange((data.pixel_masks_index[roiIndex-1] if roiIndex>0 else 0),
-                        (data.pixel_masks_index[roiIndex] if roiIndex<len(data.valid_roiIndices) else len(data.pixel_masks_index)))
-    return [data.pixel_masks[ii][1] for ii in indices],  [data.pixel_masks[ii][0] for ii in indices]
+    indices = np.arange(\
+        (data.pixel_masks_index[roiIndex-1] if roiIndex>0 else 0),
+        (data.pixel_masks_index[roiIndex] if\
+                roiIndex<data.original_nROIs else len(data.pixel_masks_index)))
+    return [data.pixel_masks[ii][1] for ii in indices],\
+                [data.pixel_masks[ii][0] for ii in indices]
 
 def find_roi_coords(data, roiIndex):
     x, y = find_full_roi_coords(data, roiIndex)
@@ -279,9 +283,8 @@ def show_CaImaging_FOV(data,
     
     img = (img-img.min())/(img.max()-img.min())
     img = np.power(img, 1/NL)
-    img = ax.imshow(img, vmin=0, vmax=1, cmap=cmap, aspect='equal', interpolation='none', 
-            origin='lower',
-            extent=extent)
+    img = ax.imshow(img, vmin=0, vmax=1, cmap=cmap, aspect='equal', 
+                    interpolation='none', origin='lower', extent=extent)
     ax.axis('off')
 
     if roiIndex is not None:
@@ -304,9 +307,8 @@ def show_CaImaging_FOV(data,
                         color='w', fontsize=7)
 
     if with_annotation:
-        ax.annotate('%i ROIs' % np.sum(data.iscell), (0, 0), xycoords='axes fraction', rotation=90, ha='right')
-    
-    ax.set_title(key)
+        ax.annotate('%i ROIs' % data.nROIs, (0, 0), xycoords='axes fraction', rotation=90, ha='right')
+        ax.set_title(key)
     
     return fig, ax, img
 

@@ -3,18 +3,18 @@ from scipy.ndimage import filters
 from scipy.interpolate import interp1d
 import time
 
-####################################
-# ---------------------------------
-# DEFAULT_CA_IMAGING_OPTIONS
+##############################################################################
+# -------------------------------------------------------------------------- #
+#          DEFAULT OPTIONS FOR FLUORESCENCE (dFoF) PROCESSING                # 
 
-ROI_TO_NEUROPIL_INCLUSION_FACTOR = 1.1 # ratio to discard ROIs with weak fluo compared to neuropil
+ROI_TO_NEUROPIL_INCLUSION_FACTOR = 1.0 # ratio to discard ROIs with weak fluo compared to neuropil
 METHOD = 'percentile' # either 'minimum', 'percentile', 'sliding_minimum', or 'sliding_percentile'
-T_SLIDING = 300. # seconds
-PERCENTILE = 10. # percent
-NEUROPIL_CORRECTION_FACTOR = 0.8
+T_SLIDING = 300. # seconds (used only if METHOD= 'sliding_minimum' | 'sliding_percentile')
+PERCENTILE = 10. # for baseline (used only if METHOD= 'percentile' | 'sliding_percentile')
+NEUROPIL_CORRECTION_FACTOR = 0.8 # fraction of neuropil substracted to fluorescence
 
-# ---------------------------------
-####################################
+# -------------------------------------------------------------------------- #
+##############################################################################
 
 def compute_minimum(array):
     return np.repeat(np.min(array, axis=1)[:,np.newaxis],
@@ -168,8 +168,6 @@ def compute_dFoF(data,
     # Step 1) ->  performing neuropil correction 
     correctedFluo = data.rawFluo-\
             neuropil_correction_factor*data.neuropil
-    # correctedFluo = data.rawFluo[valid_roiIndices, :]-\
-            # neuropil_correction_factor*data.neuropil[valid_roiIndices, :]
     
     # Step 2) -> compute the F0 term (~ sliding minimum/percentile)
     correctedFluo0 = compute_F0(data, correctedFluo,
@@ -178,11 +176,11 @@ def compute_dFoF(data,
                                 sliding_window=sliding_window)
 
     # Step 3) -> determine the valid ROIs
-    # ROIs with strictly positive baseline
-    valid_roiIndices = np.min(correctedFluo0, axis=1)>1
-    # valid_roiIndices = (\
-            # (np.mean(data.rawFluo, axis=1)>\
-            # roi_to_neuropil_fluo_inclusion_factor*np.mean(data.neuropil, axis=1)))
+    # ROIs with strictly positive baseline ++ Above Inclusion Factor
+    valid_roiIndices = \
+                (np.min(correctedFluo0, axis=1)>1) &\
+        ((np.mean(data.rawFluo, axis=1)>\
+            roi_to_neuropil_fluo_inclusion_factor*np.mean(data.neuropil, axis=1)))
 
     # Step 4) -> compute the delta F over F quantity: dFoF = (F-F0)/F0
     data.dFoF = (correctedFluo[valid_roiIndices, :]-\
@@ -195,7 +193,7 @@ def compute_dFoF(data,
     #######################################################################
     if verbose:
         if np.sum(~valid_roiIndices)>0:
-            print('\n  ** %i ROIs were discarded with the positive F0 criterion (%.1f%%) ** \n'\
+            print('\n  ** %i ROIs were discarded with the positive-F0 and Neuropil-Factor criteria (%.1f%%) ** \n'\
                   % (np.sum(~valid_roiIndices),
                       100*np.sum(~valid_roiIndices)/correctedFluo.shape[0]))
         else:
@@ -203,18 +201,19 @@ def compute_dFoF(data,
             
     # we update the previous quantities
     data.initialize_ROIs(\
-            valid_roiIndices= np.arange(data.iscell.sum())[valid_roiIndices])
+            valid_roiIndices = np.arange(data.original_nROIs)[valid_roiIndices])
 
     # we resrict the rawFluo and neuropil to valid ROIs
-    data.rawFluo = data.rawFluo[valid_roiIndices,:]
-    data.neuropil = data.neuropil[valid_roiIndices,:]
+    data.rawFluo = data.rawFluo[data.valid_roiIndices,:]
+    data.neuropil = data.neuropil[data.valid_roiIndices,:]
 
     if with_correctedFluo_and_F0:
-        data.correctedFluo0 = correctedFluo0
-        data.correctedFluo = correctedFluo
+        data.correctedFluo0 = correctedFluo0[data.valid_roiIndices,:]
+        data.correctedFluo = correctedFluo[data.valid_roiIndices,:]
     
     if verbose:
         print('-> dFoF calculus done !  (calculation took %.1fs)' % (time.time()-tick))
+<<<<<<< HEAD
 
     return None
 
@@ -229,3 +228,5 @@ if __name__=='__main__':
     print(3)
 
 
+=======
+>>>>>>> upstream/main
