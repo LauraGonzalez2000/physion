@@ -213,7 +213,6 @@ def compute_dFoF(data,
     
     if verbose:
         print('-> dFoF calculus done !  (calculation took %.1fs)' % (time.time()-tick))
-<<<<<<< HEAD
 
     return None
 
@@ -228,5 +227,3 @@ if __name__=='__main__':
     print(3)
 
 
-=======
->>>>>>> upstream/main
