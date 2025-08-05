@@ -325,7 +325,8 @@ def plot(data,
         settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
         fstart += settings[key]['fig_fraction']
 
-    
+    print("settings ", settings)
+    print("hi ")
     for key in settings:
         exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
         #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
@@ -369,6 +370,8 @@ def plot_modif(data,
         fstart += settings[key]['fig_fraction']
 
     
+    print("settings ", settings)
+    print("hi")
     for key in settings:
         exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
         #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)

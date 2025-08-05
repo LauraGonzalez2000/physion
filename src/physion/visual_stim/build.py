@@ -141,7 +141,9 @@ if __name__=='__main__':
             with open(args.protocol, 'r') as f:
                 protocol = json.load(f)
 
+            print(f"Protocol: {protocol}")
             Stim = build_stim(protocol)
+            #print("Stim", Stim)
 
             def update(Stim, index):
                 if index<len(Stim.experiment['index']):

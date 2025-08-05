@@ -35,7 +35,6 @@ class visual_stim:
                  demo=False):
         """
         """
-
         self.protocol = protocol
 
         # initialize screen parameters
@@ -184,6 +183,7 @@ class visual_stim:
                           xcenter=0,
                           zcenter=0):
         """ add a grating patch, drifting when varying the time phase"""
+        #print("angle for grating", angle)
         xrot = self.compute_rotated_coords(angle,
                                            xcenter=xcenter,
                                            zcenter=zcenter)
@@ -266,8 +266,6 @@ class visual_stim:
             VECS, FULL_VECS = [], {}
             for key in default_params:
                 FULL_VECS[key], self.experiment[key] = [], []
-
-
                 if ('N-log-'+key in protocol) and (protocol['N-log-'+key]>1):
                     # LOG-SPACED parameters
                     VECS.append(np.logspace(np.log10(protocol[key+'-1']),

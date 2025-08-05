@@ -42,6 +42,7 @@ class stim(visual_stim):
 
     def __init__(self, protocol):
         super().__init__(protocol, params)
+        print("attributes", self.__dict__)
 
     def get_image(self, episode, 
                   time_from_episode_start=0):
