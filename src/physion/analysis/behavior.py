@@ -12,13 +12,14 @@ def population_analysis(FILES,
 
     times, fracs_running, subjects = [], [], []
     if ax is None:
-        fig, ax = pt.figure(1, figsize=(5,1.3))
+        fig, ax = pt.figure(axes=(1,1), figsize=(5,1.3))
     else:
         fig = None
 
-    for f in FILES:
+    #for f in FILES:
+    for f, filename in enumerate(FILES):
 
-        data = Data(f, verbose=False)
+        data = Data(filename, verbose=False)
         if (data.nwbfile is not None) and ('Running-Speed' in data.nwbfile.acquisition):
             speed = data.nwbfile.acquisition['Running-Speed'].data[:]
             max_time = len(speed)/data.nwbfile.acquisition['Running-Speed'].rate

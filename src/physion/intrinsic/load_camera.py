@@ -20,7 +20,12 @@ if CameraInterface is None:
                             'hardware', 'Thorlabs', 'camera_dlls')
         os.environ['PATH'] = absolute_path_to_dlls + os.pathsep +\
                                                     os.environ['PATH']
-        os.add_dll_directory(absolute_path_to_dlls)
+        try:
+            os.add_dll_directory(absolute_path_to_dlls)
+        except FileNotFoundError:
+            print()
+            print(' [!!] %s not found' % absolute_path_to_dlls)
+            print()
         CameraInterface = 'ThorCam'
         from thorlabs_tsi_sdk.tl_camera import TLCameraSDK
     except (AttributeError, ModuleNotFoundError):
