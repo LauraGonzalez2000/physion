@@ -3,6 +3,9 @@ import numpy as np
 
 from physion.analysis import read_NWB, process_NWB
 
+from physion.analysis import stat_tools
+import pandas as pd 
+
 def Normalize(x):
     if np.std(x)>0:
         return (x-np.mean(x))/np.std(x)
@@ -50,6 +53,25 @@ def NWB_to_dataframe(nwbfile,
 
     # - - - - - - - - - - - - - - - 
     # --- neural activity 
+
+    if 'ophys' in data.nwbfile.processing:
+
+        if not hasattr(data, 'dFoF'):
+            data.build_dFoF(specific_time_sampling=time,
+                            interpolation='linear',
+                            verbose=verbose)
+
+        dataframe.nROIs = data.nROIs
+
+        # Build all ROI columns in a single pass to avoid fragmentation
+        if ('dFoF' in normalize) or (normalize == 'all'):
+            roi_data = {f'dFoF-ROI{i}': Normalize(data.dFoF[i, :])for i in range(data.nROIs)}
+        else:
+            roi_data = {f'dFoF-ROI{i}': data.dFoF[i, :] for i in range(data.nROIs)}
+
+        dataframe = pd.concat([dataframe, pd.DataFrame(roi_data)], axis=1)
+
+    '''
     if 'ophys' in data.nwbfile.processing:
 
         if not hasattr(data, 'dFoF'):
@@ -65,7 +87,7 @@ def NWB_to_dataframe(nwbfile,
                 dataframe['dFoF-ROI%i'%i] = Normalize(data.dFoF[i,:])
             else:
                 dataframe['dFoF-ROI%i'%i] = data.dFoF[i,:]
-
+    '''
     # - - - - - - - - - - - - - - - 
     # --- behavioral characterization
 
@@ -366,6 +388,101 @@ def extract_stim_keys(dataframe,
 
     return STIM
 
+def compute_summary_data_simple(
+    self,
+    stat_test_props,
+    episode_cond=None,
+    response_args={},
+    response_significance_threshold=0.01,
+    verbose=True):
+
+    # Prepare summary dictionary
+    summary_data = {
+        'value': [],
+        'std-value': [],
+        'sem-value': [],
+        'significant': [],
+        'relative_value': []}
+
+    # Run statistical test once
+    interval_pre=[-2,0]
+    interval_post=[1,3]
+    test='wilcoxon'
+    positive = True
+    
+    response = self.get_response(**response_args)
+
+    pre_cond  = self.compute_interval_cond(interval_pre)
+    post_cond  = self.compute_interval_cond(interval_post)
+
+        # print(response[episode_cond,:][:,pre_cond].mean(axis=1))
+        # print(response[episode_cond,:][:,post_cond].mean(axis=1))
+        # print(len(response.shape)>1,(np.sum(episode_cond)>1))
+    if len(response.shape)>1 and (np.sum(episode_cond)>1):
+        stats = stat_tools.StatTest(response[episode_cond,:][:,pre_cond].mean(axis=1),
+                                       response[episode_cond,:][:,post_cond].mean(axis=1),
+                                       test=test, positive=positive,
+                                       verbose=verbose)
+    else:
+        stats = stat_tools.StatTest(None, None,
+                                       test=test, positive=positive,
+                                       verbose=verbose)
+    
+
+    # If results are valid
+    if stats.r != 0:
+        diff = stats.y - stats.x
+        summary_data['value'].append(np.mean(diff))
+        summary_data['std-value'].append(np.std(diff))
+        summary_data['sem-value'].append(sem(diff))
+        summary_data['significant'].append(
+            stats.significant(threshold=response_significance_threshold))
+
+        if np.sum(stats.x == 0) == 0:
+            summary_data['relative_value'].append(np.mean(diff / stats.x))
+        else:
+            summary_data['relative_value'].append(np.nan)
+    else:
+        for key in summary_data:
+            summary_data[key].append(np.nan)
+
+    # Convert to arrays
+    for key in summary_data:
+        summary_data[key] = np.array(summary_data[key])
+
+    return summary_data
+
+def stat_test_for_evoked_responses(self,
+                                       episode_cond=None,
+                                       response_args={},
+                                       interval_pre=[-2,0], interval_post=[1,3],
+                                       test='wilcoxon',
+                                       positive=True,
+                                       verbose=True):
+        """
+        """
+        response = self.get_response(**response_args)
+
+        if episode_cond is None:
+            episode_cond = self.find_episode_cond()
+
+        pre_cond  = self.compute_interval_cond(interval_pre)
+        post_cond  = self.compute_interval_cond(interval_post)
+
+        # print(response[episode_cond,:][:,pre_cond].mean(axis=1))
+        # print(response[episode_cond,:][:,post_cond].mean(axis=1))
+        # print(len(response.shape)>1,(np.sum(episode_cond)>1))
+        if len(response.shape)>1 and (np.sum(episode_cond)>1):
+            return stat_tools.StatTest(response[episode_cond,:][:,pre_cond].mean(axis=1),
+                                       response[episode_cond,:][:,post_cond].mean(axis=1),
+                                       test=test, positive=positive,
+                                       verbose=verbose)
+        else:
+            return stat_tools.StatTest(None, None,
+                                       test=test, positive=positive,
+                                       verbose=verbose)
+
+
 def compute_summary_data(self, stat_test_props,
                              episode_cond=None,
                              exclude_keys=['repeat'],
@@ -373,8 +490,6 @@ def compute_summary_data(self, stat_test_props,
                              response_significance_threshold=0.01,
                              verbose=True):
 
-        if episode_cond is None:
-            episode_cond = self.find_episode_cond() # all true by default
 
         VARIED_KEYS, VARIED_VALUES, VARIED_INDICES, Nfigs, VARIED_BINS = [], [], [], 1, []
         for key in self.varied_parameters:
@@ -387,6 +502,7 @@ def compute_summary_data(self, stat_test_props,
                                                    .5*(x[1:]+x[:-1]),
                                                    [x[-1]+.5*(x[-1]-x[-2])]]))
 
+        
         summary_data = {'value':[], 'std-value':[], 'sem-value':[], 
                         'significant':[], 'relative_value':[]}
 

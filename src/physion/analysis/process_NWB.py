@@ -483,6 +483,7 @@ class EpisodeData:
                                                             response_args=response_args,
                                                             verbose=verbose,
                                                             **stat_test_props)
+                #print("stats", stats)
                 for key, index in zip(VARIED_KEYS, indices):
                     summary_data[key].append(self.varied_parameters[key][index])
                     summary_data[key+'-index'].append(index)
@@ -504,7 +505,7 @@ class EpisodeData:
 
             stats = self.stat_test_for_evoked_responses(response_args=response_args,
                                                         **stat_test_props)
-
+            #print(stats)
             # if (stats.x is not None) and (stats.y is not None):
             if stats.r!=0:
                 summary_data['value'].append(np.mean(stats.y-stats.x))
