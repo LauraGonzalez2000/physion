@@ -2,6 +2,7 @@
 # import os, sys, pathlib
 import numpy as np
 import matplotlib.pylab as plt
+from scipy.ndimage import filters
 
 from physion.dataviz import tools as dv_tools
 import physion.utils.plot_tools as pt
@@ -99,9 +100,8 @@ def add_CaImaging(data, tlim, ax,
                   vicinity_factor=1, 
                   subsampling=1, 
                   name='[Ca] imaging',
-                  annotation_side='left', 
-                  state='both',
-                  threshold=0.5):
+                  annotation_side='left',
+                  sigma=0):
 
     if (subquantity in ['dF/F', 'dFoF']) and (not hasattr(data, 'dFoF')):
         data.build_dFoF(**dFoF_args)
@@ -123,7 +123,10 @@ def add_CaImaging(data, tlim, ax,
                 fig_fraction_start # bottom position
 
         if (subquantity in ['dF/F', 'dFoF']):
-            y = data.dFoF[ir, np.arange(i1,i2)][::subsampling]
+            if sigma > 0 :
+                y = filters.gaussian_filter1d(data.dFoF[ir, np.arange(i1,i2)][::subsampling], sigma)
+            else : 
+                y = data.dFoF[ir, np.arange(i1,i2)][::subsampling]
             dv_tools.plot_scaled_signal(data,ax, t, y, tlim, 1.,
                               ax_fraction_extent=fig_fraction/len(roiIndices),
                               ax_fraction_start=ypos,
@@ -131,7 +134,10 @@ def add_CaImaging(data, tlim, ax,
                               scale_side=scale_side,
                              scale_unit_string=('%.0f$\\Delta$F/F' if (n==0) else ' '))
         else:
-            y = data.rawFluo[ir,np.arange(i1,i2)][::subsampling]
+            if sigma > 0 :
+                y = filters.gaussian_filter1d(data.rawFluo[ir,np.arange(i1,i2)][::subsampling], sigma)
+            else : 
+                y = data.rawFluo[ir,np.arange(i1,i2)][::subsampling]
             dv_tools.plot_scaled_signal(data, ax, t, y, tlim, 1.,
                    ax_fraction_extent=fig_fraction/len(roiIndices),
                    ax_fraction_start=ypos, color=color,
@@ -185,14 +191,9 @@ def add_CaImaging_mean(data, tlim, ax,
         y = data.rawFluo.mean(axis=0)[np.arange(i1,i2)][::subsampling]
 
     
-    '''
     dv_tools.plot_scaled_signal(data, ax, t, y, tlim, 1., fig_fraction, fig_fraction_start, color=color,
                             scale_unit_string=('%.0fdF/F' if subquantity in ['dF/F', 'dFoF'] else ''))
-    '''#not adding something for the scale_side was creating bugs (before fig_fraction) SOFIA
     
-    dv_tools.plot_scaled_signal(data, ax, t, y, tlim, 1., 'left', fig_fraction, fig_fraction_start, color=color,
-                            scale_unit_string=('%.0fdF/F' if subquantity in ['dF/F', 'dFoF'] else ''))
-
     dv_tools.add_name_annotation(data, ax, name, tlim, fig_fraction, fig_fraction_start, color=color)
 
 
