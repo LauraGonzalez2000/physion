@@ -8,6 +8,8 @@ from physion.dataviz.imaging import *
 
 from physion.analysis import read_NWB
 
+import matplotlib.patches as patches
+
 
 def add_Photodiode(data, tlim, ax,
                    fig_fraction_start=0., fig_fraction=1.,
@@ -72,29 +74,15 @@ def add_Locomotion(data,
             data.nwbfile.acquisition['Running-Speed'])
 
     x, y = data.t_running_speed[i1:i2][::subsampling], data.running_speed[i1:i2][::subsampling]
-    print("in locomotion ",y)
-    print("len locomotion x",len(x))
-    print("len locomotion y", len(y))
-    print("Indices 1 and 2 of time and sumbsampling Locomotion", i1," , ", i2, " , ", subsampling)
-
+   
     threshold_cond = (y>=threshold)
-    print("threshold cond", threshold_cond)
-    print("len threshold cond", len(threshold_cond))
-
-
-
-
-
-
+    
     if state == 'running':
         x_, y_ = x[threshold_cond], y[threshold_cond]
     elif state == 'resting':
         x_, y_ = x[~threshold_cond], y[~threshold_cond]
     elif state == 'both':
         x_, y_ = x, y 
-
-    #print("len x_",len(x_))
-    #print("len y_", len(y_))
 
     dv_tools.plot_scaled_signal(data, ax, x_, y_,
                                 tlim, speed_scale_bar,
@@ -171,11 +159,6 @@ def add_FaceMotion(data, tlim, ax,
             data.nwbfile.processing['FaceMotion'].data_interfaces['face-motion'])
 
     x, y = data.t_facemotion[i1:i2][::subsampling], data.facemotion[i1:i2][::subsampling]
-
-    #print("len x Facemotion",len(x))
-    #print("len y Facemotion", len(y))
-    #print("Indices 1 and 2 of time and sumbsampling Facemotion", i1," , ", i2, " , ", subsampling)
-
 
     dv_tools.plot_scaled_signal(data, ax, x, y, tlim, 1.,
                                 ax_fraction_extent=fig_fraction,
@@ -309,7 +292,11 @@ def plot(data,
          settings = {},
          figsize=(9,6), 
          Tbar=0., zoom_area=None,
-         ax=None): #, 
+         ax=None, 
+         grey=False, 
+         black=False, 
+         grey_co=[], 
+         black_co=[]): #, 
          #state='both',
          #threshold = 0.5):
 
@@ -325,8 +312,6 @@ def plot(data,
         settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
         fstart += settings[key]['fig_fraction']
 
-    print("settings ", settings)
-    print("hi ")
     for key in settings:
         exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
         #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
@@ -343,8 +328,35 @@ def plot(data,
     ax.set_xlim([dv_tools.shifted_start(tlim)-0.01*(tlim[1]-tlim[0]),tlim[1]+0.01*(tlim[1]-tlim[0])])
     ax.set_ylim([-0.05,1.05])
 
+    if black:
+        ax.axvspan(black_co[0], black_co[1], color='gray', zorder=1)
+
+    if grey:
+        ax.axvspan(grey_co[0], grey_co[1], color='lightgrey', zorder=1)
+
     if zoom_area is not None:
-        ax.fill_between(zoom_area, [0,0], [1,1],  color='k', alpha=.2, lw=0)
+        #ax.fill_between(zoom_area, [0,0], [1,1],  color='k', alpha=.2, lw=0)
+        #outline is more clear
+        if isinstance(zoom_area[0], (list, tuple)):  # multiple regions
+            zoom_regions = zoom_area
+        else:  # single region
+            zoom_regions = [zoom_area]
+
+        for zr in zoom_regions:
+            rect = patches.Rectangle((zr[0], 0),    # bottom-left corner (x,y)
+                                    zr[1]-zr[0], # width
+                                    1,                  # height
+                                    linewidth=1.5,
+                                    edgecolor='black',
+                                    facecolor='none', 
+                                    zorder=3)
+            ax.add_patch(rect)
+
+    if black:
+        ax.axvspan(black_co[0], black_co[1], color='gray')
+
+    if grey:
+        ax.axvspan(grey_co[0], grey_co[1], color='lightgrey')
 
     return fig, ax
 
@@ -369,9 +381,6 @@ def plot_modif(data,
         settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
         fstart += settings[key]['fig_fraction']
 
-    
-    print("settings ", settings)
-    print("hi")
     for key in settings:
         exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
         #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
