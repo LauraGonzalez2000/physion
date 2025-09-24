@@ -15,7 +15,7 @@ from physion.visual_stim.build import build_stim
 
 def plot(episodes,
            # episodes props
-           quantity='dFoF', roiIndex=None, roiIndices='all',
+           quantity='dFoF', roiIndex=None,
            condition=None,
            COL_CONDS=None, column_keys=[], column_key='',
            ROW_CONDS=None, row_keys=[], row_key='',
@@ -208,7 +208,7 @@ def plot(episodes,
                     cond = np.array(condition & col_cond & row_cond & color_cond)#[:response.shape[0]]
                     results = episodes.stat_test_for_evoked_responses(quantity=quantity,
                                                                       episode_cond=cond,
-                                                                      response_args=dict(roiIndex=roiIndex, roiIndices=roiIndices),
+                                                                      response_args=dict(roiIndex=roiIndex),
                                                                       **stat_test_props)
 
                     ps, size = results.pval_annot()
@@ -254,10 +254,6 @@ def plot(episodes,
         # if hasattr(episodes, 'rawFluo') or hasattr(episodes, 'dFoF') or hasattr(episodes, 'neuropil'):
             # if roiIndex is not None:
                 # S+='roi #%i' % roiIndex
-            # elif roiIndices in ['sum', 'mean', 'all']:
-                # S+='n=%i rois' % len(episodes.data.valid_roiIndices)
-            # else:
-                # S+='n=%i rois' % len(roiIndices)
         # # for i, key in enumerate(episodes.varied_parameters.keys()):
         # #     if 'single-value' in getattr(episodes, '%s_plot' % key).currentText():
         # #         S += ', %s=%.2f' % (key, getattr(episodes, '%s_values' % key).currentText())
@@ -265,6 +261,34 @@ def plot(episodes,
                 # xycoords='figure fraction')
 
     return fig, AX
+
+def get_trial_average_trace(episodes,
+                            quantity='dFoF',
+                            roiIndex=None,
+                            condition=None,
+                            with_std_over_rois=False):
+    """
+    Return trial-averaged response trace (mean and SEM) for one Episodes object.
+    """
+
+    if condition is None:
+        condition = np.ones(np.sum(episodes.protocol_cond_in_full_data), dtype=bool)
+    elif len(condition) == len(episodes.protocol_cond_in_full_data):
+        condition = condition[episodes.protocol_cond_in_full_data]
+
+    avg_dim = 'episodes' if with_std_over_rois else 'ROIs'
+
+    response = episodes.get_response2D(quantity=quantity,
+                                       episode_cond=condition,
+                                       roiIndex=roiIndex,
+                                       averaging_dimension=avg_dim)
+    if response.size == 0:
+        return None, None
+
+    mean_trace = response.mean(axis=0)
+    sem_trace  = response.std(axis=0) / np.sqrt(response.shape[0])
+
+    return mean_trace, sem_trace
 
 
 if __name__=='__main__':
@@ -286,8 +310,7 @@ if __name__=='__main__':
                 protocol_id=args.protocol_id)
         episodes.init_visual_stim(data)
 
-        plot_trial_average(episodes,
-                           with_screen_inset=True)
+        plot(episodes, with_screen_inset=True)
         pt.plt.show()
 
     else:

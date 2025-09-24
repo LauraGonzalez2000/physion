@@ -72,12 +72,9 @@ class EpisodeData:
         # because "protocol_id" and "protocol_name" are over-written by self.set_quantities
 
         if (protocol_id is None):
-            print("Protocol ID is None")
             if (protocol_name is not None):
-                print("Protocol name is not None -> get protocol ID")
                 protocol_id = full_data.get_protocol_id(protocol_name)
             else:
-                print("Protocol name is also None -> default id 0")
                 protocol_id = 0
 
         # we overwrite those to single values
