@@ -1,5 +1,5 @@
 # %% [markdown]
-# #Quick spatial Mapping
+# # Quick spatial Mapping
 
 # %%
 # load packages:
@@ -42,6 +42,48 @@ ep = EpisodeData(data,
                  protocol_name = protocol, 
                  verbose=True)
 
+#%% [markdown]
+# ### Description quick spatial mapping
+# 9 static patches at 9 positions x=(-36,0,36) and y=(-26,0,26)
+#%%
+varied_keys = [k for k in ep.varied_parameters.keys() if k!='repeat']
+varied_values = [ep.varied_parameters[k] for k in varied_keys]
+print(varied_keys)
+print(varied_values)
+
+#%%
+# show image here?
+#%%
+import itertools
+from physion.dataviz.episodes.trial_average import plot as plot_trial_average
+import matplotlib.pyplot as plt
+
+fig, AX = plt.subplots(3, 3, figsize = (10,10))  # 3x3 grid
+#AX_flat = np.array(AX).flatten() 
+
+
+i=0
+j=0
+for values in itertools.product(*varied_values):
+    print(values)
+    stim_cond = ep.find_episode_cond(key=varied_keys, value=values)
+    response = ep.get_response2D(quantity='dFoF',
+                                 episode_cond=stim_cond)
+    
+    AX[j][i].plot(ep.t, response.mean(axis=0))
+    
+    print(i,j)
+    if j<2:
+        j+=1
+    else :
+        i+=1
+        j=0
+        
+
+
+
+
+
 #%%
 def plot(response, title=''):
     fig, AX = pt.figure(figsize=(1,1))
@@ -54,3 +96,24 @@ def plot(response, title=''):
 # 3 dimensions (dFoF) - roi = None - averaging dimensions = ROIs [DEFAULT !]
 response = ep.get_response2D(quantity="dFoF", averaging_dimension='ROIs')
 plot(response, 'mean over ROIs, n=%i eps' % response.shape[0])
+
+
+
+fig, AX = pt.figure(axes_extents=[[ [1,1], [1,1], [1,1]],
+                                  [ [1,1], [1,1], [1,1]],
+                                  [ [1,1], [1,1], [1,1]]])
+print(AX)
+#AX = AX.flatten()
+AX_flat = np.array(AX).flatten()  # shape (9,)
+print(AX_flat)
+i=0
+j=0
+for values in itertools.product(*varied_values):
+    #print(values)
+    #print(stim_cond)
+
+    stim_cond = ep.find_episode_cond(key=varied_keys, value=values)
+    
+    plot_trial_average(episodes = ep, quantity='dFoF', condition=stim_cond, fig=fig, AX=AX_flat)
+    i+=1
+pt.show()
