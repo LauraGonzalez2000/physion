@@ -6,6 +6,7 @@ possible_conda_dir_lists = [os.path.join(os.path.expanduser('~'), 'miniforge3'),
                             os.path.join(os.path.expanduser('~'), 'miniconda3'),
                             os.path.join(os.path.expanduser('~'), 'anaconda3'),
                             os.path.join(os.path.expanduser('~'), '.conda'),
+                            os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'miniconda3'),
                             os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Continuum', 'anaconda3'),
                             os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Continuum', 'miniconda3')]
                        

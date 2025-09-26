@@ -59,11 +59,9 @@ from physion.dataviz.episodes.trial_average import plot as plot_trial_average
 import matplotlib.pyplot as plt
 
 fig, AX = plt.subplots(3, 3, figsize = (10,10))  # 3x3 grid
-#AX_flat = np.array(AX).flatten() 
-
 
 i=0
-j=0
+j=2
 for values in itertools.product(*varied_values):
     print(values)
     stim_cond = ep.find_episode_cond(key=varied_keys, value=values)
@@ -72,7 +70,8 @@ for values in itertools.product(*varied_values):
     
     AX[j][i].plot(ep.t, response.mean(axis=0))
     
-    print(i,j)
+    print(j,i)
+    
     if j<2:
         j+=1
     else :
@@ -117,3 +116,4 @@ for values in itertools.product(*varied_values):
     plot_trial_average(episodes = ep, quantity='dFoF', condition=stim_cond, fig=fig, AX=AX_flat)
     i+=1
 pt.show()
+# %%
