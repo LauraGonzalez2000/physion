@@ -60,23 +60,60 @@ import matplotlib.pyplot as plt
 
 fig, AX = plt.subplots(3, 3, figsize = (10,10))  # 3x3 grid
 
-i=0
-j=2
+#i=0
+#j=0
 for values in itertools.product(*varied_values):
     print(values)
+
+
     stim_cond = ep.find_episode_cond(key=varied_keys, value=values)
     response = ep.get_response2D(quantity='dFoF',
                                  episode_cond=stim_cond)
     
-    AX[j][i].plot(ep.t, response.mean(axis=0))
-    
-    print(j,i)
-    
-    if j<2:
-        j+=1
-    else :
-        i+=1
+    if values == (np.float64(-36.0), np.float64(-23.0)):
+        i=2
         j=0
+    
+    elif values == (np.float64(-36.0), np.float64(0.0)):
+        i=2
+        j=1
+    
+    elif values == (np.float64(-36.0), np.float64(23.0)):
+        i=2
+        j=2
+    
+    elif values == (np.float64(0.0), np.float64(-23.0)):
+        i=1
+        j=0
+    
+    elif values == (np.float64(0.0), np.float64(0.0)):
+        i=1
+        j=1
+    
+    elif values == (np.float64(0.0), np.float64(23.0)):
+        i=1
+        j=2
+    
+    elif values == (np.float64(36.0), np.float64(-23.0)):
+        i=0
+        j=0
+    
+    elif values == (np.float64(36.0), np.float64(0.0)):
+        i=0
+        j=1
+    elif values == (np.float64(36.0), np.float64(23.0)):
+        i=0
+        j=2
+    
+    print(i,j)
+    AX[i][j].plot(ep.t, response.mean(axis=0))
+    
+    #
+    #if i<2:
+    #    i+=1
+    #else :
+    #    j+=1
+    #    i=0
         
 
 
@@ -101,14 +138,14 @@ plot(response, 'mean over ROIs, n=%i eps' % response.shape[0])
 fig, AX = pt.figure(axes_extents=[[ [1,1], [1,1], [1,1]],
                                   [ [1,1], [1,1], [1,1]],
                                   [ [1,1], [1,1], [1,1]]])
-print(AX)
+
 #AX = AX.flatten()
 AX_flat = np.array(AX).flatten()  # shape (9,)
-print(AX_flat)
+
 i=0
 j=0
 for values in itertools.product(*varied_values):
-    #print(values)
+    print(values)
     #print(stim_cond)
 
     stim_cond = ep.find_episode_cond(key=varied_keys, value=values)
