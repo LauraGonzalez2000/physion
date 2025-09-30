@@ -15,6 +15,7 @@ import ffmpeg
 
 from PyQt5 import QtGui, QtWidgets, QtCore
 
+sys.path += ['../src'] # add src code directory for physion
 from physion.assembling.tools import load_FaceCamera_data
 from physion.utils.files import get_files_with_extension,\
         get_TSeries_folders
