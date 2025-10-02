@@ -201,7 +201,7 @@ def perform_fft_analysis(data, nrepeat,
         phase = np.angle(spectrum)[nrepeat, :, :]
     elif phase_range=='0:2*pi':
         phase = (2.*np.pi+np.angle(spectrum)[nrepeat, :, :])%(2.*np.pi) - np.pi
-
+    X
     return rel_power, phase
 
 def find_ellipse_cond(maps, shape):
