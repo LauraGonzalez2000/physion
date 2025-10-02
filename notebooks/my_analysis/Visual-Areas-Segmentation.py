@@ -59,8 +59,8 @@ data = build_trial_data(maps)
 data['vasculatureMap'] = imVasc[::int(imVasc.shape[0]/data['aziPosMap'].shape[0]),\
                                 ::int(imVasc.shape[1]/data['aziPosMap'].shape[1])]
 segmentation_params={'phaseMapFilterSigma': 2.,
-                    'signMapFilterSigma': 1.,
-                    'signMapThr': 0.8,
+                    'signMapFilterSigma': 2.5,
+                    'signMapThr': 0.5,
                     'eccMapFilterSigma': 10.,
                     'splitLocalMinCutStep': 5.,
                     'mergeOverlapThr': 0.4,

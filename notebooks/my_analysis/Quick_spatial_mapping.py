@@ -136,7 +136,7 @@ print(center_value)
 print(around_value)
 print(diff_value)
 #%%
-plot_qsm(index=0)
+plot_qsm(index=0, coord_map=coord_map, diffs=diffs)
 #%%
 print(SESSIONS['files'])
 print(SESSIONS['files'][0][-1])
@@ -162,7 +162,7 @@ print(SESSIONS['files'])
 animal_ids = ["1", "2", "3", "2", "3", 
               "4", "5", "6", "7", "8",
               "9", "10", "7", "2", "3",
-              "4", "5", "9", "8", "10",
+              "4", "5", "9", "10", "10",
               "7", "5", "5", "2"]
 
 # Find unique animals
