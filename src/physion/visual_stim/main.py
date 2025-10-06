@@ -13,6 +13,7 @@ import json
 
 from physion.visual_stim.screens import SCREENS
 from physion.visual_stim.build import build_stim
+from physion.visual_stim.shuffling import *
 
 defaults = {\
     'presentation-duration': 2,
@@ -261,8 +262,14 @@ class visual_stim:
 
         else:
 
+            #
             # ------------  MULTIPLE STIMS ------------
             # 
+
+            #############################################
+            ###    == build all set of parameters ==  ### 
+            #############################################
+
             VECS, FULL_VECS = [], {}
             for key in default_params:
                 FULL_VECS[key], self.experiment[key] = [], []
@@ -290,50 +297,71 @@ class visual_stim:
                 for i, key in enumerate(default_params.keys()):
                     FULL_VECS[key].append(vec[i])
 
-            for k in ['index', 'repeat', 'bg-color', 'interstim',
-                      'time_start', 'time_stop', 'time_duration']:
-                self.experiment[k] = []
+
+            #############################################
+            ###    == build repetition sequence   ==  ### 
+            #############################################
 
             index_no_repeat = np.arange(len(FULL_VECS[key]))
 
             # then dealing with repetitions
             Nrepeats = max([1, protocol['N-repeat']])
 
-            if 'shuffling-seed' in protocol:
-                np.random.seed(protocol['shuffling-seed']) # initialize random seed
+            # episodes in order of stim variations
+            indices = np.concatenate(
+                    [index_no_repeat for n in range(Nrepeats)])
+            repeats = np.concatenate(
+                    [np.ones(len(index_no_repeat),dtype=int)*n\
+                            for n in range(Nrepeats)])
 
-            for r in range(Nrepeats):
+            #############################################
+            ###    ======     SHUFFLING ?      =====  ### 
+            #############################################
 
-                # shuffling if necessary !
-                if (protocol['Presentation']=='Randomized-Sequence'):
-                    np.random.shuffle(index_no_repeat)
+            if ('shuffling' in protocol) or\
+                    (protocol['Presentation']=='Randomized-Sequence'):
 
-                for n, i in enumerate(index_no_repeat):
-                    for key in default_params:
-                        self.experiment[key].append(FULL_VECS[key][i])
-                    self.experiment['index'].append(i) # shuffled
-                    # self.experiment['bg-color'].append(self.blank_color)
-                    self.experiment['repeat'].append(r)
+                indices, repeats = shuffle_single_protocol(indices, 
+                                                           repeats,
+                                                           protocol)
+
+            #############################################
+            ###    ==  building the time course   ==  ### 
+            #############################################
+
+            for k in ['index', 'repeat', 'bg-color', 'interstim',
+                      'time_start', 'time_stop', 'time_duration']:
+                self.experiment[k] = []
+
+            for n, i, r in zip(range(len(indices)), indices, repeats):
+
+                for key in default_params:
+                    self.experiment[key].append(FULL_VECS[key][i])
+
+                self.experiment['index'].append(i) # shuffled
+                self.experiment['bg-color'].append(self.blank_color)
+                self.experiment['repeat'].append(repeats[i])
+
+                if n==0:
                     self.experiment['time_start'].append(\
-                            protocol['presentation-prestim-period']+\
-                            (r*len(index_no_repeat)+n)*\
-                                (protocol['presentation-duration']+\
-                                protocol['presentation-interstim-period']))
-                    self.experiment['time_stop'].append(\
-                            self.experiment['time_start'][-1]+\
+                            protocol['presentation-prestim-period'])
+                else:
+                    self.experiment['time_start'].append(\
+                        self.experiment['time_stop'][-1]+\
+                                protocol['presentation-interstim-period'])
+
+                self.experiment['time_stop'].append(\
+                    self.experiment['time_start'][-1]+\
                             protocol['presentation-duration'])
-                    self.experiment['interstim'].append(\
-                            protocol['presentation-interstim-period'])
-                    self.experiment['time_duration'].append(\
-                            protocol['presentation-duration'])
+
+                self.experiment['interstim'].append(\
+                        protocol['presentation-interstim-period'])
+                self.experiment['time_duration'].append(\
+                        protocol['presentation-duration'])
 
         for k in ['index', 'repeat','time_start', 'time_stop',
                   'bg-color', 'interstim', 'time_duration']:
             self.experiment[k] = np.array(self.experiment[k])
-
-        if len(self.experiment['bg-color'])!=len(self.experiment['index']):
-            self.experiment['bg-color'] = self.blank_color*\
-                    np.ones(len(self.experiment['index']))
 
         # we add a protocol_id
         # 0 by default for single protocols, overwritten for multiprotocols
@@ -621,49 +649,35 @@ class multiprotocol(visual_stim):
         # # SHUFFLING IF NECESSARY
         # ---------------------------- #
 
-        if (protocol['shuffling']=='full'):
-            # print('full shuffling of multi-protocol sequence !')
-            np.random.seed(protocol['shuffling-seed']) # initializing random seed
-            indices = np.arange(len(self.experiment['index']))
-            np.random.shuffle(indices)
+        indices = shuffle_multiprotocol(\
+             np.arange(len(self.experiment['index'])),
+                    self.experiment['repeat'], 
+                              self.experiment['protocol_id'],
+                                    protocol) # nothing if no shuffling key
 
-            for key in self.experiment:
-                self.experiment[key] = np.array(self.experiment[key])[indices]
-
-        if (protocol['shuffling']=='per-repeat'):
-            # TO BE TESTED
-            indices = np.arange(len(self.experiment['index']))
-            new_indices = []
-            for r in np.unique(self.experiment['repeat']):
-                repeat_cond = np.argwhere(self.experiment['repeat']==r).flatten()
-                r_indices = indices[repeat_cond]
-                np.random.shuffle(r_indices)
-                new_indices = np.concatenate([new_indices, r_indices])
-
-            for key in self.experiment:
-                self.experiment[key] = np.array(self.experiment[key])[new_indices]
-
-        # we rebuild the time course 
-        self.experiment['time_start'][0] =\
-                protocol['presentation-prestim-period']
-        self.experiment['time_stop'][0] =\
-                protocol['presentation-prestim-period']+\
-                    self.experiment['time_duration'][0]
-        self.experiment['interstim'] = \
-                np.concatenate([self.experiment['interstim'][1:],\
-                [self.experiment['interstim'][0]]])
-        for i in range(1, len(self.experiment['index'])):
-            self.experiment['time_start'][i] = \
-                    self.experiment['time_stop'][i-1]+\
-                    self.experiment['interstim'][i]
-            self.experiment['time_stop'][i] = \
-                    self.experiment['time_start'][i]+\
-                        self.experiment['time_duration'][i]
-        self.tstop = self.experiment['time_stop'][-1]+\
-                protocol['presentation-poststim-period']
+        # updating sequence
         for key in self.experiment:
-            if type(self.experiment[key])==list:
-                self.experiment[key] = np.array(self.experiment[key])
+            if key not in ['time_start', 'time_stop', 
+                           'interstim', 'time_duration']:
+                print(key)
+                self.experiment[key] = \
+                    np.array(self.experiment[key])[indices]
+
+        # rebuilding experiment time course
+        for n, i, isi, dur in zip(range(len(indices)), indices, 
+                               np.array(self.experiment['interstim'])[indices],
+                               np.array(self.experiment['time_duration'])[indices]):
+
+            if n==0:
+                self.experiment['time_start'].append(\
+                        protocol['presentation-prestim-period'])
+            else:
+                self.experiment['time_start'].append(\
+                    self.experiment['time_stop'][-1]+isi)
+
+            self.experiment['time_stop'].append(\
+                                self.experiment['time_start'][-1]+dur)
+            self.experiment['interstim'].append(isi)
 
     ##############################################
     ##  ----  MAPPING TO CHILD PROTOCOLS --- #####
@@ -699,4 +713,8 @@ def init_bg_image(cls, index):
     return cls.experiment['bg-color'][index]+0.*cls.x
 
 
+if __name__=='__main__':
 
+    print(5)
+    stim = visual_stim()
+    print(4)
