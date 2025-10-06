@@ -1,10 +1,13 @@
 # %% [markdown]
 # # Quick spatial Mapping
+# ### Description quick spatial mapping
+# 9 static patches at 9 positions x=(-36,0,36) and y=(-26,0,26)
+
 
 # %%
 # load packages:
 import os, sys
-sys.path += ['../src'] # add src code directory for physion
+sys.path += ['../../src'] # add src code directory for physion
 from physion.analysis.read_NWB import Data, scan_folder_for_NWBfiles
 from physion.analysis.process_NWB import EpisodeData
 from physion.utils  import plot_tools as pt
@@ -43,9 +46,6 @@ coord_map = {
             (np.float64(36.0), np.float64(23.0)):   (0, 2),
         }
 
-#%% [markdown]
-# ### Description quick spatial mapping
-# 9 static patches at 9 positions x=(-36,0,36) and y=(-26,0,26)
 #%%
 filename = SESSIONS['files'][0]
 data = Data(filename,
@@ -67,9 +67,6 @@ varied_values = [ep.varied_parameters[k] for k in varied_keys]
 print(varied_keys)
 print(varied_values)
 
-#%%
-# show image here?
-#%%
 
 
 #%% plot quick spatial mapping
@@ -108,6 +105,8 @@ def plot_qsm(index, coord_map, diffs):
     summary = ep.compute_summary_data(stat_test_props={})
     center_cond = (summary['x-center']==0) & (summary['y-center']==0)
     center_value = summary['value'][center_cond]
+    center_resp = summary['significant'][center_cond]
+    fig.text(0.4, 0.26, f"Center responsive ={center_resp}", ha="center", fontsize=12)
     around_value = summary['value'][~center_cond].mean()
     diff_value = center_value-around_value
     fig.text(0.4, 0.24, f"Center ={center_value[0]:.3f}", ha="center", fontsize=12)
@@ -132,17 +131,22 @@ center_cond = (summary['x-center']==0) & (summary['y-center']==0)
 center_value = summary['value'][center_cond]
 around_value = summary['value'][~center_cond].mean()
 diff_value = center_value-around_value
-print(center_value)
-print(around_value)
-print(diff_value)
+
+center_resp = summary['significant'][center_cond]
+
+print("center value : ",center_value)
+print("center significant : ", center_resp)
+print("mean value around : ",around_value)
+print("difference center - around : ",diff_value)
 #%%
 plot_qsm(index=0, coord_map=coord_map, diffs=diffs)
 #%%
 print(SESSIONS['files'])
 print(SESSIONS['files'][0][-1])
 
+#%% [markdown]
+# ## Plot for all files
 #%%
-
 diffs = []
 for index in range(len(SESSIONS['files'])):
     plot_qsm(index=index, coord_map=coord_map, diffs=diffs)
@@ -153,10 +157,9 @@ print(diffs)
 
 plt.scatter(np.arange(len(diffs)), diffs)
 
+# %% [markdown]
+# ### plot per animal
 #%%
-print(SESSIONS['files'])
-
-# %%
 
 # Example: diffs and matching animal IDs
 animal_ids = ["1", "2", "3", "2", "3", 
@@ -166,36 +169,6 @@ animal_ids = ["1", "2", "3", "2", "3",
               "7", "5", "5", "2"]
 
 # Find unique animals
-unique_animals = np.unique(animal_ids)
-
-plt.figure(figsize=(8, 5))
-
-for i, animal in enumerate(unique_animals):
-    # Get diffs for this animal
-    animal_diffs = [d for d, a in zip(diffs, animal_ids) if a == animal]
-    # Scatter with jitter along x for each animal
-    x = np.ones(len(animal_diffs)) * i
-    plt.scatter(x, animal_diffs, label=animal, alpha=0.7)
-
-plt.xticks(range(len(unique_animals)), unique_animals)
-plt.xlabel("Animal")
-plt.ylabel("Difference")
-plt.title("Differences grouped per animal")
-plt.legend()
-plt.show()
-
-#%%
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Example data
-
-animal_ids = ["1", "2", "3", "2", "3", 
-              "4", "5", "6", "7", "8",
-              "9", "10", "7", "2", "3",
-              "4", "5", "9", "10", "10",
-              "7", "5", "5", "2"]
-
 unique_animals = np.unique(animal_ids)
 
 means = []
@@ -225,4 +198,9 @@ plt.xticks(range(len(unique_animals)), unique_animals)
 plt.xlabel("Animal")
 plt.ylabel("Difference")
 plt.title("Differences per animal")
-plt.hl(y=0.05)
+
+
+def responsive_center():
+    files = []
+    
+    return files

@@ -13,7 +13,7 @@
 # load packages:
 import numpy as np
 import sys
-sys.path += ['../src'] # add src code directory for physion
+sys.path += ['../../src'] # add src code directory for physion
 import physion.utils.plot_tools as pt
 from physion.intrinsic.tools import *
 from physion.intrinsic.analysis import RetinotopicMapping

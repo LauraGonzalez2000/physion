@@ -7,6 +7,7 @@ from physion.dataviz import tools as dv_tools
 from physion.dataviz.imaging import *
 
 from physion.analysis import read_NWB
+import matplotlib.patches as patches
 
 
 def add_Photodiode(data, tlim, ax,
@@ -257,6 +258,79 @@ def plot(data,
          settings = {},
          figsize=(9,6), 
          Tbar=0., zoom_area=None,
+         ax=None, 
+         grey=False, 
+         black=False, 
+         grey_co=[], 
+         black_co=[]): #, 
+         #state='both',
+         #threshold = 0.5):
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = None
+
+    fig_fraction_full, fstart = np.sum([settings[key]['fig_fraction'] for key in settings]), 0
+
+    for key in settings:
+        settings[key]['fig_fraction_start'] = fstart
+        settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
+        fstart += settings[key]['fig_fraction']
+
+    for key in settings:
+        exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
+        #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
+
+    # time scale bar
+    if Tbar==0.:
+        Tbar = np.max([int((tlim[1]-tlim[0])/30.), 1])
+
+    ax.plot([dv_tools.shifted_start(tlim), dv_tools.shifted_start(tlim)+Tbar], [1.,1.], lw=1, color='k')
+    ax.annotate((' %is' % Tbar if Tbar>=1 else  '%.1fs' % Tbar) ,
+                [dv_tools.shifted_start(tlim), 1.02], color='k')#, fontsize=9)
+
+    ax.axis('off')
+    ax.set_xlim([dv_tools.shifted_start(tlim)-0.01*(tlim[1]-tlim[0]),tlim[1]+0.01*(tlim[1]-tlim[0])])
+    ax.set_ylim([-0.05,1.05])
+
+    if black:
+        ax.axvspan(black_co[0], black_co[1], color='gray', zorder=1)
+
+    if grey:
+        ax.axvspan(grey_co[0], grey_co[1], color='lightgrey', zorder=1)
+
+    if zoom_area is not None:
+        #ax.fill_between(zoom_area, [0,0], [1,1],  color='k', alpha=.2, lw=0)
+        #outline is more clear
+        if isinstance(zoom_area[0], (list, tuple)):  # multiple regions
+            zoom_regions = zoom_area
+        else:  # single region
+            zoom_regions = [zoom_area]
+
+        for zr in zoom_regions:
+            rect = patches.Rectangle((zr[0], 0),    # bottom-left corner (x,y)
+                                    zr[1]-zr[0], # width
+                                    1,                  # height
+                                    linewidth=1.5,
+                                    edgecolor='black',
+                                    facecolor='none', 
+                                    zorder=3)
+            ax.add_patch(rect)
+
+    if black:
+        ax.axvspan(black_co[0], black_co[1], color='gray')
+
+    if grey:
+        ax.axvspan(grey_co[0], grey_co[1], color='lightgrey')
+
+    return fig, ax
+'''
+def plot(data,
+         tlim=[0,100],
+         settings = {},
+         figsize=(9,6), 
+         Tbar=0., zoom_area=None,
          ax=None):
 
     if ax is None:
@@ -290,4 +364,4 @@ def plot(data,
         ax.fill_between(zoom_area, [0,0], [1,1],  color='k', alpha=.2, lw=0)
 
     return fig, ax
-
+'''
