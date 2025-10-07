@@ -133,6 +133,11 @@ class PDF2:
         X0, Y0, DX, DY = 0.12, 3, 8, 3
         self.AXs['ex1_ROI'] = self.create_panel([X0, Y0, DX, DY], 'ex1_EOI')
 
+        X0, Y0, DX, DY = 0.12, 6, 8, 3
+        self.AXs['fract_resp'] = self.create_panel([X0, Y0, DX, DY], 'fract_resp')
+
+
+
 
 
     def create_panel(self, coords, title=None):
@@ -151,12 +156,18 @@ class PDF2:
     
     def fill_PDF2(self, 
                  image1, 
-                 image2): 
+                 image2, 
+                 image3): 
         for key in self.AXs:
             self.AXs[key].axis('off')
             if key=='Resp_protocol':
                 self.AXs[key].imshow(image1)
             
-            if key=='ex1_ROI':
+            elif key=='ex1_ROI':
                 self.AXs[key].imshow(image2)
+
+            elif key=='fract_resp':
+                self.AXs[key].imshow(image3)
+
+            
                 

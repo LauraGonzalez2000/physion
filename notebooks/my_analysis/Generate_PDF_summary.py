@@ -48,7 +48,6 @@ def generate_sub_png(data, settings, dict_annotation, cell_type, grey=False, bla
     show_CaImaging_FOV(data, key='meanImg', 
                        cmap=pt.get_linear_colormap('k', 'tab:green'),
                        NL=2,
-                       roiIndices=range(data.nROIs), 
                        ax=AX[2])
     fig1.savefig(os.path.join(os.path.expanduser('~'), 'Output_expe','In_Vivo',cell_type, 'pieces', 'FOV.png'), facecolor="white")
     image1 = Image.open(os.path.join(os.path.expanduser('~'), 'Output_expe','In_Vivo', cell_type, 'pieces', 'FOV.png'))
@@ -78,7 +77,6 @@ def generate_sub_png(data, settings, dict_annotation, cell_type, grey=False, bla
     #cropped_img.save(f'C:/Users/laura.gonzalez/Output_expe/In_Vivo/{cell_type}/pieces/zoom2_cropped.png')
     
     return 0
-
 #%%
 def find_available_settings(data, debug=False):
 
@@ -94,7 +92,6 @@ def find_available_settings(data, debug=False):
                         'CaImaging': {'fig_fraction': 10,
                                                    'subsampling': 1,
                                                    'subquantity': 'dF/F',
-                                                   'roiIndices': np.random.choice(np.arange(data.nROIs), np.min([20,data.nROIs]), replace=False),
                                                    'color': '#2ca02c'}}
 
     
@@ -121,7 +118,6 @@ def find_available_settings(data, debug=False):
                         'CaImaging': {'fig_fraction': 10,
                                                    'subsampling': 1,
                                                    'subquantity': 'dF/F',
-                                                   'roiIndices': np.random.choice(np.arange(data.nROIs), np.min([20,data.nROIs]), replace=False),
                                                    'color': '#2ca02c'}}
     
     if missing==['facemotion']:
@@ -136,7 +132,6 @@ def find_available_settings(data, debug=False):
                         'CaImaging': {'fig_fraction': 10,
                                                'subsampling': 1,
                                                'subquantity': 'dF/F',
-                                               'roiIndices': np.random.choice(np.arange(data.nROIs), np.min([20,data.nROIs]), replace=False),
                                                'color': '#2ca02c'}}
         
     if missing==['dFoF']:
@@ -162,11 +157,9 @@ def find_available_settings(data, debug=False):
                     'CaImaging': {'fig_fraction': 10,
                                                'subsampling': 1,
                                                'subquantity': 'dF/F',
-                                               'roiIndices': np.random.choice(np.arange(data.nROIs), np.min([20,data.nROIs]), replace=False),
                                                'color': '#2ca02c'}}
         
     return settings
-
 #%%
 def figure_to_array(fig):
             """Convert a matplotlib Figure to a NumPy array"""
@@ -176,85 +169,113 @@ def figure_to_array(fig):
             ncols, nrows = fig.canvas.get_width_height()
             fig_arr = np.frombuffer(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
             return fig_arr
-
 #%%
-'''
-def generate_figures(SESSIONS, cell_type='nan'):
+def study_responsiveness(SESSIONS, index, protocol):
+
+    filename = SESSIONS['files'][index]
+    data = Data(filename, verbose=False)
+    data.build_dFoF()
+   
+    protocol = protocol
+    stat_test_props = dict(interval_pre=[-1.,0],                                   
+                        interval_post=[1.,2.],                                   
+                        test='ttest')
+
+    ep = EpisodeData(data,
+                    protocol_name=protocol,
+                    quantities=['dFoF'])
+
+    print("dFoF shape : ", ep.dFoF.shape)
+    print("varied parameters : ", ep.varied_parameters)
+
+    values = []
+    significance = []
+    colors = []
+
+    for roi_n in range(data.nROIs):
+        ep = EpisodeData(data,
+                        protocol_name=protocol,
+                        quantities=['dFoF'], 
+                        verbose=False)
+
+        summary_data = ep.compute_summary_data(stat_test_props,
+                                            exclude_keys=['repeat', 'angle', 'contrast'],
+                                            response_significance_threshold=0.05,
+                                            response_args=dict(roiIndex=roi_n))
+        
+        if summary_data['significant']: 
+            if summary_data['value'] < 0: color = 'red'
+            else: color = 'green'
+            colors.append(color)
+        else: 
+            if summary_data['value'] < 0: color = 'pink'
+            else: color = 'lime'
+            colors.append(color)
+
+        values.append(summary_data['value'].flatten())
+        significance.append(summary_data['significant'].flatten())
+
+    fig, AX = plt.subplots(1, 1, figsize=(1, 1))
+    x= np.arange(0,len(values),1)
+    y = [float(value) for value in values]
+    AX.bar(x, y, color=colors)
+    AX.set_xlabel('ROI #')
+    AX.set_ylabel('Responsiveness')
+    AX.set_title(f'Session #{index}')
+    print(significance)
+    true_indexes = [i for i, val in enumerate(significance) if val]
+    false_indexes = [i for i, val in enumerate(significance) if not val]
+    print(true_indexes)
+    print(f'{len(true_indexes)} significant ROI out of {len(significance)} ROIs')
+    return 0
+#%%
+def plot_responsiveness(data):
+
+    fig, AX = pt.figure(axes = (7,1))
+
+    protocols = [p for p in data.protocols 
+                 if (p != 'grey-10min') and (p != 'black-2min')]
     
-    range_ = [0]
-    data_s = []
-    dFoF_options = {'roi_to_neuropil_fluo_inclusion_factor' : 1.0, # ratio to discard ROIs with weak fluo compared to neuropil
-                        'method_for_F0' : 'sliding_percentile', # either 'minimum', 'percentile', 'sliding_minimum', or 'sliding_percentile'
-                        'sliding_window' : 300. , # seconds (used only if METHOD= 'sliding_minimum' | 'sliding_percentile')
-                        'percentile' : 10. , # for baseline (used only if METHOD= 'percentile' | 'sliding_percentile')
-                        'neuropil_correction_factor' : 0.8 }# fraction of neuropil substracted to fluorescence
+    for idx, p in enumerate(protocols):
         
-    if isinstance(SESSIONS, str):
-        filename = SESSIONS
-    
-    if not isinstance(SESSIONS, str):
-        range_ =  range(len(SESSIONS['files']))
-        for i in range_:
-            data = Data(SESSIONS['files'][i], verbose=False)
-            data.build_dFoF(**dFoF_options, verbose=False)
-            data_s.append(data)
+        ep = EpisodeData(data,
+                    protocol_name=p,
+                    quantities=['dFoF'])
         
-    for index in range_:
-        if not isinstance(SESSIONS, str):
-             filename = SESSIONS['files'][index]
+        values = []
+        significance = []
+        colors = []
 
-        data = Data(filename,verbose=False)
-        data.build_dFoF(**dFoF_options,verbose=False )
-        data.build_running_speed()
-        data.build_facemotion()
-        data.build_pupil_diameter()
-        data_s.append(data)
-
-        protocol = data.metadata['protocol']
-        subject_id = data.metadata['subject_ID']
-        
-        dict_annotation = {'name': filename.split('\\')[-1],
-                           'Subject_ID' : subject_id,
-                           'protocol' : protocol}
-
-        settings = find_available_settings(data)
-        
-        generate_sub_png(data, settings, dict_annotation, cell_type)
-                
-        fig1, AX = pt.figure(axes=(3,1), figsize=(1.4,3), wspace=0.15)
-        show_CaImaging_FOV(data, key='meanImg', 
-                        cmap=pt.get_linear_colormap('k', 'tab:green'),
-                        NL=2, # non-linearity to normalize image
-                        ax=AX[0])
-        show_CaImaging_FOV(data, key='max_proj', 
-                        cmap=pt.get_linear_colormap('k', 'tab:green'),
-                        NL=2, # non-linearity to normalize image
-                        ax=AX[1])
-        show_CaImaging_FOV(data, key='meanImg', 
-                        cmap=pt.get_linear_colormap('k', 'tab:green'),
-                        NL=2,
-                        roiIndices=range(data.nROIs), 
-                        ax=AX[2])
-        fig1 = figure_to_array(fig1)
+        for roi_n in range(data.nROIs):
             
-        fig2, _ = plot_raw(data, tlim=[0, data.t_dFoF[-1]], settings=settings, figsize=(9,3), zoom_area = [((2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]),((15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1])])
-        fig2 = figure_to_array(fig2)
+            summary_data = ep.compute_summary_data(stat_test_props={},
+                                                exclude_keys=['repeat', 'angle', 'contrast'],
+                                                response_significance_threshold=0.05,
+                                                response_args=dict(roiIndex=roi_n))
+          
+            for value in range(len(summary_data['value'])):
+                if summary_data['significant'][value]: 
+                    if summary_data['value'][value] < 0: color = 'red'
+                    else: color = 'green'
+                    colors.append(color)
+                else: 
+                    if summary_data['value'][value] < 0: color = 'pink'
+                    else: color = 'lime'
+                    colors.append(color)
 
-        fig3, _ = plot_raw(data, tlim=[(2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]], settings=settings, figsize=(9,3))
-        fig3 = figure_to_array(fig3)
-
-        fig4, _ = plot_raw(data, tlim=[(15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1]], settings=settings, figsize=(9,3))
-        fig4 = figure_to_array(fig4)
-
-    for index in range_:
-        fig5, _ = plot_dFoF_per_protocol(data_s=data_s, dataIndex = index)
-        fig5 = figure_to_array(fig5)
-
-    return dict_annotation, fig1, fig2, fig3, fig4, fig5
-'''
+                values.append(summary_data['value'][value].flatten())
+                significance.append(summary_data['significant'][value].flatten())
+        
+        true_indexes = [i for i, val in enumerate(significance) if val]
+        print(f'{len(true_indexes)} significant ROI out of {len(significance)} ROIs')
+        r = len(true_indexes)/data.nROIs
+        colors = ['green', 'grey']
+        pt.pie(data=[r, 1-r], ax = AX[idx], COLORS = colors, pie_labels = ['%.1f%%' % (100*r),'%.1f%%' % (100*(1-r))] )
+        
+    return fig, AX
+#%%
 def generate_figures(SESSIONS, cell_type='nan'):
     
-
     dFoF_options = {
         'roi_to_neuropil_fluo_inclusion_factor': 1.0,
         'method_for_F0': 'sliding_percentile',
@@ -284,52 +305,81 @@ def generate_figures(SESSIONS, cell_type='nan'):
     print(len(data_s))
     # --- Generate figures per session ---
     for idx, data in enumerate(data_s):
-        filename = filenames[idx]
-        protocol = data.metadata['protocol']
-        subject_id = data.metadata['subject_ID']
 
-        dict_annotation = {
-            'name': filename.split('\\')[-1],
-            'Subject_ID': subject_id,
-            'protocol': protocol
-        }
+        try: 
+            filename = filenames[idx]
+            protocol = data.metadata['protocol']
+            subject_id = data.metadata['subject_ID']
 
-        settings = find_available_settings(data)
-        generate_sub_png(data, settings, dict_annotation, cell_type)
+            dict_annotation = {
+                'name': filename.split('\\')[-1],
+                'Subject_ID': subject_id,
+                'protocol': protocol
+            }
 
-        fig1, AX = pt.figure(axes=(3,1), figsize=(1.4,3), wspace=0.15)
-        show_CaImaging_FOV(data, key='meanImg',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2, ax=AX[0])
-        show_CaImaging_FOV(data, key='max_proj',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2, ax=AX[1])
-        show_CaImaging_FOV(data, key='meanImg',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2, roiIndices=range(data.nROIs), ax=AX[2])
-        fig1 = figure_to_array(fig1)
+            settings = find_available_settings(data)
+            generate_sub_png(data, settings, dict_annotation, cell_type)
 
-        fig2, _ = plot_raw(data, tlim=[0, data.t_dFoF[-1]], settings=settings, figsize=(9,3),
-                           zoom_area=[((2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]),
-                                      ((15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1])])
-        fig2 = figure_to_array(fig2)
+            fig1, AX = pt.figure(axes=(3,1), figsize=(1.4,3), wspace=0.15)
+            show_CaImaging_FOV(data, key='meanImg',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2, ax=AX[0])
+            show_CaImaging_FOV(data, key='max_proj',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2, ax=AX[1])
+            show_CaImaging_FOV(data, key='meanImg',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2,  ax=AX[2])
+            fig1 = figure_to_array(fig1)
+          
 
-        fig3, _ = plot_raw(data, tlim=[(2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]],
-                           settings=settings, figsize=(9,3))
-        fig3 = figure_to_array(fig3)
+            if hasattr(data, "dFoF") and data.dFoF is not None and len(data.dFoF) > 0:
+                fig2, _ = plot_raw(data, tlim=[0, data.t_dFoF[-1]], settings=settings, figsize=(9,3),
+                                zoom_area=[((2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]),
+                                            ((15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1])])
+                fig2 = figure_to_array(fig2)
+              
 
-        fig4, _ = plot_raw(data, tlim=[(15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1]],
-                           settings=settings, figsize=(9,3))
-        fig4 = figure_to_array(fig4)
+                fig3, _ = plot_raw(data, tlim=[(2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]],
+                                settings=settings, figsize=(9,3))
+                fig3 = figure_to_array(fig3)
+              
 
-        print("data : " ,[data])
-        fig5, _ = plot_dFoF_per_protocol(data_s=[data])
-        fig5 = figure_to_array(fig5)
+                fig4, _ = plot_raw(data, tlim=[(15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1]],
+                                settings=settings, figsize=(9,3))
+                fig4 = figure_to_array(fig4)
+              
 
-        fig6, _ = plot_dFoF_per_protocol2(data_s=[data])
-        fig6 = figure_to_array(fig6)
+            else: 
+                fig2, _  = pt.figure(axes=(1,1))
+                fig2 = figure_to_array(fig2)
+              
+                fig3, _  = pt.figure(axes=(1,1))
+                fig3 = figure_to_array(fig3)
+                
+                fig4, _  = pt.figure(axes=(1,1))
+                fig4 = figure_to_array(fig4)
+                
 
-        create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, cell_type)
+            
+            fig5, _ = plot_dFoF_per_protocol(data_s=[data])
+            fig5 = figure_to_array(fig5)
+            
+            
+            roi_n = random.randint(0, data.nROIs - 1)
+            fig6, _ = plot_dFoF_per_protocol2(data_s=[data], roiIndex=roi_n)
+            fig6 = figure_to_array(fig6)
+           
+            try: 
+                fig7, _ = plot_responsiveness(data)
+                fig7 = figure_to_array(fig7)
+                
+            except Exception as e:
+                fig7 = fig6
+                print(dict_annotation['name'])
+                print("error for pie plots")
 
-    return 0
+            create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, fig7, cell_type)
+        except: 
+            print(f"problem with {dict_annotation['name']}")
 
-        
+    return 0    
 #%%
-def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, cell_type):
+def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, fig7, cell_type):
     try: 
 
         pdf1 = PDF()
@@ -337,7 +387,7 @@ def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, cell_type):
         fig_p1 = pdf1.fig
 
         pdf2 = PDF2()
-        pdf2.fill_PDF2(fig5, fig6)
+        pdf2.fill_PDF2(fig5, fig6, fig7)
         fig_p2 = pdf2.fig
 
         output_path = f'C:/Users/laura.gonzalez/Output_expe/In_Vivo/{cell_type}/Summary_PDF/{os.path.splitext(dict_annotation['name'])[0]}_summary.pdf'
@@ -366,7 +416,7 @@ def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, cell_type):
 # ## NDNF CRE BATCH 1
 
 #%%
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_test')
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 #%% [markdown]
@@ -377,3 +427,16 @@ generate_figures(SESSIONS['files'][0], cell_type='NDNF')
 # ## All files
 #%%
 generate_figures(SESSIONS, cell_type='NDNF')
+
+
+#%% [markdown]
+# ## YANN DATASET
+
+#%%
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
+SESSIONS = scan_folder_for_NWBfiles(datafolder)
+SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
+#%%
+generate_figures(SESSIONS['files'][1], cell_type='NDNF')
+#%%
+generate_figures(SESSIONS, cell_type='NDNF_YANN')

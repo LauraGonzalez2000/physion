@@ -119,13 +119,11 @@ def plot_dFoF_per_protocol(data_s,
         session_traces = []
 
         for data in data_s:
-            print("data : ", data)
             episodes = EpisodeData(data,
                                    quantities=['dFoF', 'Running-Speed'],
                                    protocol_name=protocol,
                                    prestim_duration=1,
                                    verbose=False)
-            print("episodes : ",episodes)
 
             if metric is not None:
                 cond = compute_high_arousal_cond(episodes, pupil_threshold, running_speed_threshold, metric=metric)
@@ -134,9 +132,6 @@ def plot_dFoF_per_protocol(data_s,
             
             varied_keys = [k for k in episodes.varied_parameters.keys() if k!='repeat']
             varied_values = [episodes.varied_parameters[k] for k in varied_keys]
-
-            print("keys :", varied_keys)
-            print("values:", varied_values)
 
             i = 0
             for values in itertools.product(*varied_values):
@@ -153,7 +148,7 @@ def plot_dFoF_per_protocol(data_s,
 
         # plotting
         n_conditions = len(list(itertools.product(*varied_values)))
-        print(list(itertools.product(*varied_values)))
+
         for j in range(n_conditions):
             traces = [tr for idx, tr, _ in session_traces if idx == j]
             sems   = [se for idx, _, se in session_traces if idx == j]
@@ -241,19 +236,18 @@ def plot_dFoF_per_protocol2(data_s,
                  if (p != 'grey-10min') and (p != 'black-2min')]
     
 
-    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(9)])
+
+    fig, AX = pt.figure(axes = (7,1))
 
     for p, protocol in enumerate(protocols):
         session_traces = []
 
         for data in data_s:
-            print("data : ", data)
             episodes = EpisodeData(data,
                                    quantities=['dFoF', 'Running-Speed'],
                                    protocol_name=protocol,
                                    prestim_duration=1,
                                    verbose=False)
-            print("episodes : ",episodes)
 
             if metric is not None:
                 cond = compute_high_arousal_cond(episodes, pupil_threshold, running_speed_threshold, metric=metric)
@@ -263,8 +257,6 @@ def plot_dFoF_per_protocol2(data_s,
             varied_keys = [k for k in episodes.varied_parameters.keys() if k!='repeat']
             varied_values = [episodes.varied_parameters[k] for k in varied_keys]
 
-            print("keys :", varied_keys)
-            print("values:", varied_values)
 
             i = 0
             for values in itertools.product(*varied_values):
@@ -280,8 +272,7 @@ def plot_dFoF_per_protocol2(data_s,
                 i += 1
 
         # plotting
-        n_conditions = len(list(itertools.product(*varied_values)))
-        print(list(itertools.product(*varied_values)))
+        n_conditions = len(protocols)
         for j in range(n_conditions):
             traces = [tr for idx, tr, _ in session_traces if idx == j]
             sems   = [se for idx, _, se in session_traces if idx == j]
@@ -296,32 +287,33 @@ def plot_dFoF_per_protocol2(data_s,
                 mean_trace = np.mean(traces, axis=0)
                 sem_trace  = np.std(traces, axis=0) / np.sqrt(len(traces))
 
-            AX[j][p].plot(mean_trace, color='k')
-            AX[j][p].fill_between(np.arange(len(mean_trace)),
+            AX[p].plot(mean_trace, color='k', linewidth=0.8)
+            AX[p].fill_between(np.arange(len(mean_trace)),
                                 mean_trace - sem_trace,
                                 mean_trace + sem_trace,
                                 color='k', alpha=0.3)
             
         
-        AX[0][p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
+        AX[p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
                           (0.5,1.4),
                           xycoords='axes fraction', ha='center', fontsize=7)
     
     # annotate session or ROI info
     if roiIndex is None:
         if mode == "single":
-            AX[-1][0].annotate('single session: %s ,   n=%i ROIs' %
+            AX[0].annotate('single session: %s ,   n=%i ROIs' %
                                (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),
                                (0, 0), xycoords='axes fraction')
         else:
-            AX[-1][0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
+            AX[0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
                                (0, 0), xycoords='axes fraction')
     else:
         if mode == "single":
-            AX[-1][0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data_s[0].filename.replace('.nwb','')),
+            AX[0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data_s[0].filename.replace('.nwb','')),
                                (0, 0), xycoords='axes fraction', fontsize=7)
         else:
-            AX[-1][0].annotate('roi #%i , average over %i sessions' % (1+roiIndex, len(data_s)),
+
+            AX[0].annotate('roi #%i , average over %i sessions' % (1+roiIndex, len(data_s)),
                                (0, 0), xycoords='axes fraction', fontsize=7)
 
     pt.set_common_ylims(AX)
@@ -330,6 +322,8 @@ def plot_dFoF_per_protocol2(data_s,
     pt.set_common_xlims(AX)
     
     return fig, AX
+
+
 
 
 #%% [markdown]
