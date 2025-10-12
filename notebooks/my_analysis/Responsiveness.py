@@ -315,18 +315,6 @@ protocols = ['static-patch', 'drifting-grating' ,'looming-stim',
              'drifting-surround','quick-spatial-mapping']
 #%%
 responsiveness_sessions_vs_protocols(SESSIONS=SESSIONS, protocols=protocols)
-######################################################################################################################
-#%% [markdown]
-# ## My data - centered
-#%% MY DATA
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_centered')
-SESSIONS = scan_folder_for_NWBfiles(datafolder)
-#%%
-protocols = ['static-patch', 'drifting-grating' ,'looming-stim',
-             'Natural-Images-4-repeats','moving-dots',
-             'drifting-surround','quick-spatial-mapping']
-#%%
-responsiveness_sessions_vs_protocols(SESSIONS=SESSIONS, protocols=protocols)
 #######################################################################################################################
 #%% YANN's DATA
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')

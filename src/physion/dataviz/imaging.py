@@ -107,7 +107,7 @@ def add_CaImaging(data, tlim, ax,
         data.build_dFoF(**dFoF_args)
         
     if (type(roiIndices)==str) and roiIndices=='all':
-        roiIndices = data.valid_roiIndices
+        roiIndices = np.arange(data.nROIs)
 
     if color=='tab':
         COLORS = [plt.cm.tab10(n%10) for n in range(len(roiIndices))]

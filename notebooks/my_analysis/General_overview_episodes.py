@@ -80,7 +80,9 @@ def plot_dFoF_per_protocol(data_s,
                            roiIndex=None,
                            pupil_threshold=2.9,
                            running_speed_threshold=0.1, 
-                           metric=None):
+                           metric=None, 
+                           protocols = [], 
+                           subplots_n=9):
     """
     Plot dFoF per protocol for a single session or across multiple sessions.
 
@@ -108,12 +110,8 @@ def plot_dFoF_per_protocol(data_s,
     else:
         mode = "average"
     
-    # protocols (assume same across sessions)
-    protocols = [p for p in data_s[0].protocols 
-                 if (p != 'grey-10min') and (p != 'black-2min')]
-    
 
-    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(9)])
+    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(subplots_n)])  #generalize 9 
 
     for p, protocol in enumerate(protocols):
         session_traces = []
@@ -142,17 +140,18 @@ def plot_dFoF_per_protocol(data_s,
                     roiIndex=roiIndex,
                     condition=stim_cond & cond
                 )
+                
                 if mean_trace is not None:
                     session_traces.append((i, mean_trace, sem_trace))
                 i += 1
-
+        
         # plotting
         n_conditions = len(list(itertools.product(*varied_values)))
 
         for j in range(n_conditions):
             traces = [tr for idx, tr, _ in session_traces if idx == j]
             sems   = [se for idx, _, se in session_traces if idx == j]
-
+            
             if len(traces) == 0:
                 continue  # nothing to plot for this condition
 
@@ -163,16 +162,18 @@ def plot_dFoF_per_protocol(data_s,
                 mean_trace = np.mean(traces, axis=0)
                 sem_trace  = np.std(traces, axis=0) / np.sqrt(len(traces))
 
+            
             AX[j][p].plot(mean_trace, color='k')
             AX[j][p].fill_between(np.arange(len(mean_trace)),
                                 mean_trace - sem_trace,
                                 mean_trace + sem_trace,
                                 color='k', alpha=0.3)
-            
-        
-        AX[0][p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
-                          (0.5,1.4),
-                          xycoords='axes fraction', ha='center', fontsize=7)
+            AX[j][p].axvspan(1000, 1000+1000*episodes.time_duration[0], color='lightgrey', alpha=0.5, zorder=0)
+
+        AX[0][p].set_title(f'{protocol.replace('Natural-Images-4-repeats','natural-images')}')   
+        #AX[0][p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
+        #                  (0.5,1.4),
+        #                  xycoords='axes fraction', ha='center', fontsize=7)
     
     # annotate session or ROI info
     if roiIndex is None:
@@ -203,7 +204,8 @@ def plot_dFoF_per_protocol2(data_s,
                            roiIndex=None,
                            pupil_threshold=2.9,
                            running_speed_threshold=0.1, 
-                           metric=None):
+                           metric=None, 
+                           found=True):
     """
     Plot dFoF per protocol for a single session or across multiple sessions.
 
@@ -224,7 +226,6 @@ def plot_dFoF_per_protocol2(data_s,
     metric : str or None
         Metric to split high/low arousal conditions.
     """
-    
     # select sessions
     if dataIndex is not None:
         mode = "single"
@@ -237,7 +238,7 @@ def plot_dFoF_per_protocol2(data_s,
     
 
 
-    fig, AX = pt.figure(axes = (7,1))
+    fig, AX = pt.figure(axes = (len(protocols),1))
 
     for p, protocol in enumerate(protocols):
         session_traces = []
@@ -287,34 +288,46 @@ def plot_dFoF_per_protocol2(data_s,
                 mean_trace = np.mean(traces, axis=0)
                 sem_trace  = np.std(traces, axis=0) / np.sqrt(len(traces))
 
-            AX[p].plot(mean_trace, color='k', linewidth=0.8)
+            AX[p].plot(mean_trace, color='k', linewidth=0.1)
             AX[p].fill_between(np.arange(len(mean_trace)),
                                 mean_trace - sem_trace,
                                 mean_trace + sem_trace,
                                 color='k', alpha=0.3)
-            
+            AX[p].axvspan(1000, 1000+1000*episodes.time_duration[0], color='lightgrey', alpha=0.5, zorder=0)
+
+        AX[p].set_title(f'{protocol.replace('Natural-Images-4-repeats','natural-images')}')    
         
-        AX[p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
-                          (0.5,1.4),
-                          xycoords='axes fraction', ha='center', fontsize=7)
+        #AX[p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
+        #                  (0.5,1.4),
+        #                  xycoords='axes fraction', ha='center', fontsize=7)
     
     # annotate session or ROI info
     if roiIndex is None:
         if mode == "single":
             AX[0].annotate('single session: %s ,   n=%i ROIs' %
                                (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),
-                               (0, 0), xycoords='axes fraction')
+                               (0, -0.2), xycoords='axes fraction')
+            
         else:
             AX[0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
-                               (0, 0), xycoords='axes fraction')
+                               (0, -0.2), xycoords='axes fraction')
+            
     else:
         if mode == "single":
             AX[0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data_s[0].filename.replace('.nwb','')),
-                               (0, 0), xycoords='axes fraction', fontsize=7)
+                               (0, -0.2), xycoords='axes fraction', fontsize=7)
+            
+            if not found: 
+                AX[0].annotate('Responsive roi not found, took ns ROI',
+                                (0, -0.4), xycoords='axes fraction', fontsize=7)
         else:
 
             AX[0].annotate('roi #%i , average over %i sessions' % (1+roiIndex, len(data_s)),
-                               (0, 0), xycoords='axes fraction', fontsize=7)
+                               (0, -0.2), xycoords='axes fraction', fontsize=7)
+            
+            if not found: 
+                AX[0].annotate('Responsive roi not found, took ns ROI',
+                                (0, -0.4), xycoords='axes fraction', fontsize=7)
 
     pt.set_common_ylims(AX)
     for ax in pt.flatten(AX):
@@ -350,7 +363,6 @@ def heavy():
     # 
     datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch1','NWBs')
     data_s = generate_data_s(datafolder)
-    print(data_s)
     dataIndex, roiIndex = 4, 2
     fig, AX = plot_dFoF_per_protocol(data_s=data_s, dataIndex = dataIndex, roiIndex=roiIndex, metric=None)
 

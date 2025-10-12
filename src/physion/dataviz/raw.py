@@ -265,7 +265,7 @@ def plot(data,
          black_co=[]): #, 
          #state='both',
          #threshold = 0.5):
-
+ 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
     else:
@@ -281,7 +281,7 @@ def plot(data,
     for key in settings:
         exec('add_%s(data=data, tlim=tlim, ax=ax, **settings[key])' % key)
         #exec('add_%s(data=data, tlim=tlim, ax=ax, state=state, threshold=threshold, **settings[key])' % key)
-
+    
     # time scale bar
     if Tbar==0.:
         Tbar = np.max([int((tlim[1]-tlim[0])/30.), 1])
@@ -293,7 +293,7 @@ def plot(data,
     ax.axis('off')
     ax.set_xlim([dv_tools.shifted_start(tlim)-0.01*(tlim[1]-tlim[0]),tlim[1]+0.01*(tlim[1]-tlim[0])])
     ax.set_ylim([-0.05,1.05])
-
+    
     if black:
         ax.axvspan(black_co[0], black_co[1], color='gray', zorder=1)
 
@@ -317,13 +317,7 @@ def plot(data,
                                     facecolor='none', 
                                     zorder=3)
             ax.add_patch(rect)
-
-    if black:
-        ax.axvspan(black_co[0], black_co[1], color='gray')
-
-    if grey:
-        ax.axvspan(grey_co[0], grey_co[1], color='lightgrey')
-
+    
     return fig, ax
 '''
 def plot(data,
