@@ -136,23 +136,14 @@ def plot_responsiveness_per_protocol(ep, nROIs, AX, idx, p):
                                                     exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
                                                     response_significance_threshold=0.05,
                                                     response_args=dict(roiIndex=roi_n))
-        print("roi number : ", roi_n)
-        print("sig bool : ", bool(roi_summary_data['significant'][0]))
-        print("direction value : ", roi_summary_data['value'][0])
+    
         session_summary['significant'].append(bool(roi_summary_data['significant'][0]))
         session_summary['value'].append(roi_summary_data['value'][0])
-
-    
-    print("session summary", session_summary)
 
     resp_cond = np.array(session_summary['significant'])
 
     pos_cond = resp_cond & ([session_summary['value'][i]>0 for i in range(len(session_summary['value']))])
     neg_cond = resp_cond & ([session_summary['value'][i]<0 for i in range(len(session_summary['value']))])
-
-    print(resp_cond)
-    print(pos_cond)
-    print(neg_cond)
 
     print(f'{np.sum(resp_cond)} significant ROI ({np.sum(pos_cond)} positive, {np.sum(neg_cond)} negative) out of {len(session_summary['significant'])} ROIs')
 
@@ -283,9 +274,9 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
         show_CaImaging_FOV(data, key='meanImg',cmap=pt.get_linear_colormap('k', 'tab:green'),NL=2,  ax=AX1[2])
         
         if hasattr(data, "dFoF") and data.dFoF is not None and len(data.dFoF) > 0:
-            
-            data_cropped = data
             '''
+            data_cropped = data
+            
             max_n = 10
             n_rois_total = len(data_cropped.dFoF)
 
@@ -294,7 +285,7 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
                 data_cropped.dFoF = data_cropped.dFoF[idx, :]
             '''
             if data_type=='Sofia':
-                fig2, _ = plot_raw(data_cropped, 
+                fig2, _ = plot_raw(data, 
                                     tlim=[0, data.t_dFoF[-1]], 
                                     settings=settings, 
                                     figsize=(9,3),
@@ -305,17 +296,17 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
                                     grey_co=[638, 1238],
                                     black_co=[466, 586])
             else:
-                fig2, _ = plot_raw(data_cropped, 
+                fig2, _ = plot_raw(data, 
                                     tlim=[0, data.t_dFoF[-1]], 
                                     settings=settings, 
                                     figsize=(9,3),
                                     zoom_area=[((2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]),
                                                 ((15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1])])
             
-            fig3, _ = plot_raw(data_cropped, tlim=[(2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]],
+            fig3, _ = plot_raw(data, tlim=[(2/20)*data.t_dFoF[-1], (3/20)*data.t_dFoF[-1]],
                             settings=settings, figsize=(9,3))
             
-            fig4, _ = plot_raw(data_cropped, tlim=[(15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1]],
+            fig4, _ = plot_raw(data, tlim=[(15/20)*data.t_dFoF[-1], (16/20)*data.t_dFoF[-1]],
                             settings=settings, figsize=(9,3))
             
               
@@ -579,28 +570,48 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
 ##################################################################################################################
 # %% [markdown]
 # # Generate final figures
-#%%
-# SETTINGS
-dFoF_options = {'roi_to_neuropil_fluo_inclusion_factor': 1.0,
-                    'method_for_F0': 'sliding_percentile',
-                    'sliding_window': 300.,
-                    'percentile': 10.,
-                    'neuropil_correction_factor': 0.8}
-
-
-#%%
-#######################################################
-############### summarize all files ###################
-#######################################################
 #%% [markdown]
-# # Summarize all files
+# ## YANN DATASET
+
+#%%
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
+SESSIONS = scan_folder_for_NWBfiles(datafolder)
+SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
+
+dFoF_options = {
+        'roi_to_neuropil_fluo_inclusion_factor': 1.0,
+        'method_for_F0': 'sliding_percentile',
+        'sliding_window': 300.,
+        'percentile': 10.,
+        'neuropil_correction_factor': 0.8}
+
+data_s = []
+for idx, filename in enumerate(SESSIONS['files']):
+    data = Data(filename, verbose=False)
+    data.build_dFoF(**dFoF_options, verbose=False)
+    data.build_running_speed()
+    data.build_facemotion()
+    data.build_pupil_diameter()
+    data_s.append(data)
+
+#%% [markdown]
+# ## All individual files
+#%%
+generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann')
+#%% [mardown]
+# ## GROUPED ANALYSIS
+#%%
+fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
+
+##################################################################################################################################
+##################################################################################################################################
 
 #%% [markdown]
 # ## NDNF CRE BATCH 1
 
 #%%
-
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_1')
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_final')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -627,72 +638,9 @@ for idx, filename in enumerate(SESSIONS['files']):
 generate_figures(data_s, cell_type='NDNF', subplots_n=9, data_type = 'Sofia')
 #%% [mardown]
 # ## GROUPED ANALYSIS
-
 #%%
-'''
-dFoF_options = {
-        'roi_to_neuropil_fluo_inclusion_factor': 1.0,
-        'method_for_F0': 'sliding_percentile',
-        'sliding_window': 300.,
-        'percentile': 10.,
-        'neuropil_correction_factor': 0.8
-    }
-data_s = []
-for idx, filename in enumerate(SESSIONS['files']):
-
-    data = Data(filename, verbose=False)
-    data.build_dFoF(**dFoF_options, verbose=False)
-    data.build_running_speed()
-    data.build_facemotion()
-    data.build_pupil_diameter()
-    data_s.append(data)
-
-type='ROI'
-#Assume all datfiles have same protocols
-data = Data(SESSIONS['files'][0], verbose=False)
-protocols = [p for p in data.protocols 
-                if (p != 'grey-10min') and (p != 'black-2min')]
-
-# test code here
-'''
-#%%
-#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=9)
-#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
+fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=9)
+create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
 
 ##############################################################################################################
 ##############################################################################################################
-#%% [markdown]
-# ## YANN DATASET
-
-#%%
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
-SESSIONS = scan_folder_for_NWBfiles(datafolder)
-SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
-
-dFoF_options = {
-        'roi_to_neuropil_fluo_inclusion_factor': 1.0,
-        'method_for_F0': 'sliding_percentile',
-        'sliding_window': 300.,
-        'percentile': 10.,
-        'neuropil_correction_factor': 0.8}
-
-data_s = []
-for idx, filename in enumerate(SESSIONS['files']):
-
-    data = Data(filename, verbose=False)
-    data.build_dFoF(**dFoF_options, verbose=False)
-    data.build_running_speed()
-    data.build_facemotion()
-    data.build_pupil_diameter()
-    data_s.append(data)
-
-#%% [markdown]
-# ## All individual files
-#%%
-generate_figures(data_s, cell_type='NDNF_YANN', dFoF_options=dFoF_options, subplots_n=5, data_type = 'Yann')
-
-#%% [mardown]
-# ## GROUPED ANALYSIS
-#%%
-fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
