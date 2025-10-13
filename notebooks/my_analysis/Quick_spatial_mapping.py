@@ -67,8 +67,6 @@ varied_values = [ep.varied_parameters[k] for k in varied_keys]
 print(varied_keys)
 print(varied_values)
 
-
-
 #%% plot quick spatial mapping
 from scipy import stats
 def plot_qsm(index, coord_map, diffs):

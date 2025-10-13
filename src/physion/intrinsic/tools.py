@@ -196,16 +196,8 @@ def perform_fft_analysis(data, nrepeat):
     # relative power w.r.t. luminance
     rel_power = np.abs(spectrum)[nrepeat, :, :]/data.shape[0]/data.mean(axis=0)
 
-<<<<<<< HEAD
-    if phase_range=='-pi:pi':
-        phase = np.angle(spectrum)[nrepeat, :, :]
-    elif phase_range=='0:2*pi':
-        phase = (2.*np.pi+np.angle(spectrum)[nrepeat, :, :])%(2.*np.pi) - np.pi
-    X
-=======
     phase = np.angle(spectrum)[nrepeat, :, :]
 
->>>>>>> cd3ff0b5400650759092264ea0f1457b8edb7f6a
     return rel_power, phase
 
 def perform_phase_shift(phase, shift):

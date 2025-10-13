@@ -438,6 +438,14 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         final_ns = 1 - final_pos - final_neg
         AX[0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
                                (1, -0.6), xycoords='axes fraction')
+        
+        sem = stats.sem([pos_s, neg_s], axis=1) 
+
+        pt.annotate(AX[idx], 'Pos= %.1f ± %.1f %%' % (100 * final_pos, 100 *sem[0]),
+                (1, 0), ha='right', va='top', fontsize=6)
+        pt.annotate(AX[idx], 'Neg= %.1f ± %.1f %%' % (100 * final_neg, 100 *sem[1]),
+                    (1, -0.2), ha='right', va='top', fontsize=6)
+        
 
     elif type == 'ROI':
         pos_cond_s = np.concatenate(pos_cond_s)
@@ -446,20 +454,20 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         final_pos = np.mean(pos_cond_s)
         final_neg = np.mean(neg_cond_s)
         final_ns = 1 - final_pos - final_neg
-        AX[0].annotate('average over %i ROIs ,   mean$\pm$SEM across sessions' % np.sum(nROIs),
+        AX[0].annotate('average over %i ROIs' % np.sum(nROIs),
                                (1, -0.6), xycoords='axes fraction')
+        
+        pt.annotate(AX[idx], 'Pos= %.1f %%' % (100 * final_pos),
+                (1, 0), ha='right', va='top', fontsize=6)
+        pt.annotate(AX[idx], 'Neg= %.1f %%' % (100 * final_neg),
+                    (1, -0.2), ha='right', va='top', fontsize=6)
 
-    sem = stats.sem([pos_s, neg_s], axis=1) 
-
+    
     pt.pie(data=[final_pos, final_neg, final_ns],
         ax=AX[idx],
         COLORS=['green', 'red', 'grey'])
-
-    pt.annotate(AX[idx], 'Pos= %.1f ± %.1f %%' % (100 * final_pos, 100 *sem[0]),
-                (1, 0), ha='right', va='top', fontsize=6)
-    pt.annotate(AX[idx], 'Neg= %.1f%% ± %.1f %%' % (100 * final_neg, 100 *sem[1]),
-                (1, -0.2), ha='right', va='top', fontsize=6)
     
+
     AX[idx].set_title(f'{p.replace('Natural-Images-4-repeats','natural-images')}')
     
     return 0
