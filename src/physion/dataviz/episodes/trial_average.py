@@ -15,11 +15,7 @@ from physion.visual_stim.build import build_stim
 
 def plot(episodes,
            # episodes props
-<<<<<<< HEAD
            quantity='dFoF', roiIndex=None,
-=======
-           quantity='dFoF', roiIndex=None, 
->>>>>>> 53ac0f382445819aa69a1fd436f3fdc6014bcac4
            condition=None,
            COL_CONDS=None, column_keys=[], column_key='',
            ROW_CONDS=None, row_keys=[], row_key='',
@@ -210,15 +206,9 @@ def plot(episodes,
                 for icolor, color_cond in enumerate(COLOR_CONDS):
 
                     cond = np.array(condition & col_cond & row_cond & color_cond)#[:response.shape[0]]
-<<<<<<< HEAD
-                    results = episodes.stat_test_for_evoked_responses(quantity=quantity,
-                                                                      episode_cond=cond,
-                                                                      response_args=dict(roiIndex=roiIndex),
-=======
                     results = episodes.stat_test_for_evoked_responses(episode_cond=cond,
                                                                       response_args=dict(quantity=quantity,
                                                                                          roiIndex=roiIndex),
->>>>>>> 53ac0f382445819aa69a1fd436f3fdc6014bcac4
                                                                       **stat_test_props)
 
                     ps, size = results.pval_annot()
