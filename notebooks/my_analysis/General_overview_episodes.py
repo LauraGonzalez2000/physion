@@ -182,7 +182,7 @@ def plot_dFoF_per_protocol(data_s,
                                (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),
                                (0, 0), xycoords='axes fraction')
         else:
-            AX[-1][0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
+            AX[-1][0].annotate('average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),
                                (0, 0), xycoords='axes fraction')
     else:
         if mode == "single":
@@ -309,7 +309,7 @@ def plot_dFoF_per_protocol2(data_s,
                                (0, -0.2), xycoords='axes fraction')
             
         else:
-            AX[0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
+            AX[0].annotate('average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),
                                (0, -0.2), xycoords='axes fraction')
             
     else:

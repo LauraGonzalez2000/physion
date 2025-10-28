@@ -37,16 +37,16 @@ class PDF:
         self.AXs['Notes'].axis('off')
 
         X0, Y0, DX, DY = 0.12, 1.1, 6, 2
-        self.AXs['FOV'] = self.create_panel([X0, Y0, DX, DY], 'FOV')
+        self.AXs['FOV'] = self.create_panel([X0, Y0, DX, DY], 'Field of view')
 
         X0, Y0, DX, DY = 0.12, 3.1, 6, 2
-        self.AXs['Traces_all'] = self.create_panel([X0, Y0, DX, DY], 'Traces_all')
+        self.AXs['Traces_all'] = self.create_panel([X0, Y0, DX, DY], 'Example traces')
 
         X0, Y0, DX, DY = 0.12, 5.1, 6, 2
-        self.AXs['Traces_zoom1'] = self.create_panel([X0, Y0, DX, DY], 'Traces_zoom1')
+        self.AXs['Traces_zoom1'] = self.create_panel([X0, Y0, DX, DY], 'Traces zoom1')
 
         X0, Y0, DX, DY = 0.12, 7.1, 6, 2
-        self.AXs['Traces_zoom2'] = self.create_panel([X0, Y0, DX, DY], 'Traces_zoom2')
+        self.AXs['Traces_zoom2'] = self.create_panel([X0, Y0, DX, DY], 'Traces zoom2')
 
     def create_panel(self, coords, title=None):
         """ 
@@ -122,7 +122,7 @@ class PDF2:
         self.AXs = {}
 
         X0, Y0, DX, DY = 0.12, 0.5, 6, 8
-        self.AXs['Resp_protocol'] = self.create_panel([X0, Y0, DX, DY], 'Resp_protocol')
+        self.AXs['Resp_protocol'] = self.create_panel([X0, Y0, DX, DY], 'dFoF for each protocol')
 
     def create_panel(self, coords, title=None):
             """ 
@@ -223,27 +223,27 @@ class PDF3_:
         self.AXs = {}
 
         X0, Y0, DX, DY = 0.12, 0.5, 6, 1.5
-        self.AXs['fract_resp_ROIs'] = self.create_panel([X0, Y0, DX, DY], 'fract_resp_ROIs')
+        self.AXs['fract_resp_ROIs'] = self.create_panel([X0, Y0, DX, DY], 'fraction responsive neurons (all ROIs)')
 
         X0, Y0, DX, DY = 0.12, 2.0, 6, 1.5
-        self.AXs['fract_resp_means'] = self.create_panel([X0, Y0, DX, DY], 'fract_resp_means')
+        self.AXs['fract_resp_means'] = self.create_panel([X0, Y0, DX, DY], 'fraction responsive neurons (means of sessions)')
 
         X0, Y0, DX, DY = 0.12, 3.5, 6, 1.5
-        self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'barplots')
+        self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'Variation dFoF across protocols')
 
 
     def create_panel(self, coords, title=None):
-            """ 
-            coords: (x0, y0, dx, dy)
-                    from left to right
-                    from top to bottom (unlike matplotlib)
-            """
-            coords[1] = 1-coords[1]-coords[3]
-            ax = pt.inset(self.fig, rect=coords)
+        """ 
+        coords: (x0, y0, dx, dy)
+                from left to right
+                from top to bottom (unlike matplotlib)
+        """
+        coords[1] = 1-coords[1]-coords[3]
+        ax = pt.inset(self.fig, rect=coords)
 
-            if title:
-                ax.set_title(title, loc='left', pad=2, fontsize=8)
-            return ax
+        if title:
+            ax.set_title(title, loc='left', pad=2, fontsize=8)
+        return ax
     
     def fill_PDF3(self, 
                  image1, 

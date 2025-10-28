@@ -212,12 +212,25 @@ def get_roiIndex(data, type='pos'):
                                 sign='both')
 
         roi_summary_data = ep.compute_summary_data(stat_test_props=stat_test_props,
-                                                    exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
+                                                    exclude_keys=['repeat'],
+                                                    #exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
                                                     response_significance_threshold=0.05,
                                                     response_args=dict(roiIndex=roi_n))
         
-        session_summary['significant'].append(bool(roi_summary_data['significant'][0]))
-        session_summary['value'].append(roi_summary_data['value'][0])
+        print(roi_summary_data)
+        session_summary['significant'].append(bool(roi_summary_data['significant']))
+        session_summary['value'].append(roi_summary_data['value'])
+
+    for i in range(len(session_summary['significant'][0])):
+
+        resp_cond = np.array(session_summary['significant'][i])
+        pos_cond = resp_cond & (roi_summary_data['value'][0]>0)
+        neg_cond = resp_cond & (roi_summary_data['value'][0]<0)
+
+        pos_roi = np.arange(data.nROIs)[pos_cond]
+        neg_roi = np.arange(data.nROIs)[neg_cond]
+        ns_roi = np.arange(data.nROIs)[~resp_cond]
+
 
     resp_cond = np.array(session_summary['significant'])
     pos_cond = resp_cond & (roi_summary_data['value'][0]>0)
@@ -319,9 +332,7 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
         fig8, _ = plot_dFoF_per_protocol2(data_s=[data], roiIndex=roiIndex, found=found)
         fig9, AX9 = pt.figure(axes = (len(protocols),1))
         fig10, AX10 = pt.figure(axes = (len(protocols),1))
-
-        
-        
+  
         nROIs = data.nROIs
 
         for idx, p in enumerate(protocols):
@@ -436,7 +447,7 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         final_pos = np.mean(pos_s)
         final_neg = np.mean(neg_s)
         final_ns = 1 - final_pos - final_neg
-        AX[0].annotate('average over %i sessions ,   mean$\pm$SEM across sessions' % len(data_s),
+        AX[0].annotate('average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),
                                (1, -0.6), xycoords='axes fraction')
         
         sem = stats.sem([pos_s, neg_s], axis=1) 
@@ -582,7 +593,8 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
 # ## YANN DATASET
 
 #%%
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
+'''
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs-test')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -601,16 +613,18 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-
+'''
 #%% [markdown]
 # ## All individual files
 #%%
+'''
 generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann')
+'''
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
+#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
 
 ##################################################################################################################################
 ##################################################################################################################################
@@ -619,7 +633,8 @@ create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
 # ## NDNF CRE BATCH 1
 
 #%%
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_final')
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_test2')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -643,12 +658,15 @@ for idx, filename in enumerate(SESSIONS['files']):
 #%% [markdown]
 # ## All individual files
 #%%
+
 generate_figures(data_s, cell_type='NDNF', subplots_n=9, data_type = 'Sofia')
+
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
+'''
 fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=9)
 create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
-
+'''
 ##############################################################################################################
 ##############################################################################################################
