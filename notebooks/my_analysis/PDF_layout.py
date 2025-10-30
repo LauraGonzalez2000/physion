@@ -262,3 +262,92 @@ class PDF3_:
                 self.AXs[key].imshow(image3)
             
                 
+
+class PDF4:
+
+    def __init__(self, 
+                 structure_dict={},
+                 debug=False):
+        
+        # figure in A4 format
+        self.fig, ax  = pt.figure(figsize=(8.27, 11.69))
+        ax.axis('off')
+        self.AXs = {}
+
+        # build the axes one by one
+        X0, Y0, DX, DY = 0.12, 0.5, 6, 0.6
+        self.AXs['Notes'] = self.create_panel([X0, Y0, DX, DY], 'Notes')
+        self.AXs['Notes'].axis('off')
+
+        X0, Y0, DX, DY = 0.12, 1.1, 6, 2
+        self.AXs['Vasculature'] = self.create_panel([X0, Y0, DX, DY], 'Vasculature')
+
+        X0, Y0, DX, DY = 0.12, 3.1, 6, 2
+        self.AXs['Altitude_maps'] = self.create_panel([X0, Y0, DX, DY], 'Altitude maps')
+
+        X0, Y0, DX, DY = 0.12, 5.1, 6, 2
+        self.AXs['Azimuth_maps'] = self.create_panel([X0, Y0, DX, DY], 'Azimuth maps')
+
+        X0, Y0, DX, DY = 0.12, 7.1, 6, 2
+        self.AXs['Gradient'] = self.create_panel([X0, Y0, DX, DY], 'Gradient')
+
+        X0, Y0, DX, DY = 0.12, 9.1, 6, 2
+        self.AXs['Patches'] = self.create_panel([X0, Y0, DX, DY], 'Patches')
+
+        X0, Y0, DX, DY = 0.12, 11.1, 6, 2
+        self.AXs['Center'] = self.create_panel([X0, Y0, DX, DY], 'Center')
+
+
+
+    def create_panel(self, coords, title=None):
+        """ 
+        coords: (x0, y0, dx, dy)
+                from left to right
+                from top to bottom (unlike matplotlib)
+        """
+        coords[1] = 1-coords[1]-coords[3]
+        ax = pt.inset(self.fig, rect=coords)
+
+        if title:
+            ax.set_title(title, loc='left', pad=2, fontsize=8)
+        return ax
+
+    def fill_PDF(self, 
+                 dict_annotation, 
+                 image1, 
+                 image2, 
+                 image3, 
+                 image4, 
+                 image5, 
+                 image6): 
+        
+        for key in self.AXs:
+            self.AXs[key].axis('off')
+
+            
+            if key=='Notes':
+                self.AXs[key].axis('off')
+                txt = (
+                    f"ID mouse: \n"
+                    f"Recordings: \n"
+                )
+                self.AXs[key].text(0, 1, txt, va='top', ha='left', fontsize=10, wrap=True)
+                self.AXs[key].axis('off')
+            
+            if key=='Vasculature':
+                self.AXs[key].imshow(image1)
+                
+            elif key=='Altitude_maps':
+                self.AXs[key].imshow(image2)
+                
+            elif key=='Azimuth_maps':
+                self.AXs[key].imshow(image3)
+
+            elif key=='Gradient':
+                self.AXs[key].imshow(image4)
+
+            elif key=='Patches':
+                self.AXs[key].imshow(image5)
+
+            elif key=='Center':
+                self.AXs[key].imshow(image6)

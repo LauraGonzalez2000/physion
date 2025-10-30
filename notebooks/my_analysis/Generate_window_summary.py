@@ -8,6 +8,180 @@ sys.path += ['../../src'] # add src code directory for physion
 import numpy as np
 sys.path.append(os.path.join(os.path.expanduser('~'), 'Programming', 'In_Vivo', 'physion', 'src'))
 
+import physion.utils.plot_tools as pt
+from physion.intrinsic.tools import *
+from physion.intrinsic.analysis import RetinotopicMapping
+import matplotlib.pylab as plt
+from PIL import Image
+
+from physion.analysis.read_NWB import Data, scan_folder_for_NWBfiles
+from PDF_layout import PDF4
+
+
+# %% [markdown]
+# ## Load data
+
+# %%
+dataFolder = os.path.join(os.path.expanduser('~'), 'DATA', 
+                        'physion_Demo-Datasets', 'PV-WT', 'retinotopic_mapping',
+                        'PVTOM_BB_5')
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','Processed', 'intrinsic_img', '07_05_2025', '15-09-29')
+
+# retinotopic mapping data
+maps = np.load(os.path.join(datafolder, 'raw-maps.npy') , 
+                allow_pickle=True).item()
+#maps = dict(np.load(os.path.join(dataFolder, 'raw-maps.npz') , 
+#               allow_pickle=True))
+
+#%%
+# vasculature picture
+imVasc = np.array(Image.open(os.path.join(dataFolder, 'vasculature.tif')))
+fig1, ax = pt.figure(ax_scale=(2,2))
+ax.imshow(imVasc**1, cmap=plt.cm.gray) 
+plt.axis('off');
+
+# %% [markdown]
+# # Retinotopic Maps
+
+# %%
+fig2 = plot_retinotopic_maps(maps, map_type='altitude');
+
+# %%
+fig3 = plot_retinotopic_maps(maps, map_type='azimuth');
+
+# %% [markdown]
+# # Perform Segmentation
+
+# %%
+data = build_trial_data(maps)
+data['vasculatureMap'] = imVasc[::int(imVasc.shape[0]/data['aziPosMap'].shape[0]),\
+                                ::int(imVasc.shape[1]/data['aziPosMap'].shape[1])]
+#%%
+segmentation_params={'phaseMapFilterSigma': 2.,
+                    'signMapFilterSigma': 1.,
+                    'signMapThr': 0.8,
+                    'eccMapFilterSigma': 10.,
+                    'splitLocalMinCutStep': 5.,
+                    'mergeOverlapThr': 0.4,
+                    'closeIter': 3,
+                    'openIter': 3,
+                    'dilationIter': 15,
+                    'borderWidth': 1,
+                    'smallPatchThr': 100,
+                    'visualSpacePixelSize': 0.5,
+                    'visualSpaceCloseIter': 15,
+                    'splitOverlapThr': 1.1}
+
+data['params'] = segmentation_params
+trial = RetinotopicMapping.RetinotopicMappingTrial(**data)
+trial.processTrial(isPlot=True) # TURN TO TRUE TO VISUALIZE THE SEGMENTATION STEPS
+fig4 = trial._getSignMap(onlySMplot=True)
+
+# %%
+fig5, ax = pt.figure(ax_scale=(5,5))
+h = RetinotopicMapping.plotPatches(trial.finalPatches, 
+                                   plotaxis=ax)
+ax.imshow(imVasc, cmap=pt.plt.cm.gray, 
+          vmin=imVasc.min(), vmax=imVasc.max(), 
+          extent=[*ax.get_xlim(), *ax.get_ylim()])
+h = RetinotopicMapping.plotPatches(trial.finalPatches, 
+                                   plotaxis=ax)
+ax.axis('off');
+#fig.savefig(os.path.join(os.path.expanduser('~'), # 'Desktop', 'fig.svg'))
+
+# %% [markdown]
+# # Summary Plot
+
+# %%
+fig, AX = pt.figure(axes=(5,1), 
+                    ax_scale=(.9*2,.9*3), 
+                    wspace=0.4)
+
+for map_type, ax, bounds in zip(['altitude', 'azimuth'], AX[:2],
+                                [[-50, 50],[-60, 60]]):
+    im = ax.imshow(maps['%s-retinotopy' % map_type], cmap=plt.cm.PRGn,\
+                vmin=bounds[0], vmax=bounds[1])
+    fig.colorbar(im, ax=ax,
+                label='visual e (deg.)')
+    ax.set_title('%s map' % map_type)
+
+ax = AX[2]
+im = ax.imshow(trial.signMapf, cmap='jet', vmin=-1, vmax=1)
+fig.colorbar(im, ax=ax, label='phase gradient sign')
+ax.set_title('sign map')
+
+ax=AX[-2]
+h = RetinotopicMapping.plotPatches(trial.finalPatches, plotaxis=ax)
+ax.imshow(imVasc, cmap=plt.cm.gray, vmin=imVasc.min(), vmax=imVasc.max(), 
+        extent=[*ax.get_xlim(), *ax.get_ylim()])
+h = RetinotopicMapping.plotPatches(trial.finalPatches, plotaxis=ax)
+ax.set_title('w/ vasculature')
+
+ax = AX[-1]
+h = RetinotopicMapping.plotPatches(trial.finalPatches, 
+                                   plotaxis=ax)
+ax.imshow(imVasc, cmap=plt.cm.gray, 
+        vmin=imVasc.min(), vmax=imVasc.max(), 
+        extent=[*ax.get_xlim(), *ax.get_ylim()])
+
+for ax in AX:
+    ax.axis('equal')
+    ax.axis('off')    
+
+fig.savefig(os.path.join(os.path.expanduser('~'), 
+                        'Desktop', 'fig.svg'))
+# %% [markdown]
+### Identify the Center (<20˚) of V1
+# 
+# %%
+
+# Based on the excentricity center
+fig6, ax = pt.figure(ax_scale=(2,5))
+m = 0*maps['altitude-retinotopy']
+cond = ( np.abs(maps['altitude-retinotopy'])<10) &\
+          ( np.abs(maps['azimuth-retinotopy'])<10)
+
+# NOT WORKING
+centerV1 = trial.finalPatches['patch01'].getCenter()
+plt.plot([centerV1[1]], [centerV1[0]], 'ro', 
+         alpha=0.3, ms=25)
+m[~cond] = 1
+
+h = RetinotopicMapping.plotPatches(trial.finalPatches, 
+                                   alpha=0, plotaxis=ax)
+ax.imshow(imVasc, cmap=plt.cm.gray, 
+        vmin=imVasc.min(), vmax=imVasc.max(), 
+        extent=[*ax.get_xlim(), *ax.get_ylim()])
+ax.axis('off')
+ax.axis('equal');
+
+#%%
+
+def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, cell_type):
+    try: 
+        pdf1 = PDF4()
+        pdf1.fill_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6)
+        fig_p1 = pdf1.fig
+
+        output_path = f'C:/Users/laura.gonzalez/Output_expe/In_Vivo/{cell_type}/Window_Summary_PDF/{os.path.splitext(dict_annotation['name'])[0]}_summary.pdf'
+
+        with PdfPages(output_path) as pdf:
+                pdf.savefig(fig_p1, dpi=300, bbox_inches="tight")  # Page 1
+
+        print("Window PDF File saved successfully ")
+        
+    except Exception as e:
+        print(f"Error creating the individual window PDF file : {e}")
+
+    return 0
+
+#%%
+create_PDF(dict_annotation={}, fig1, fig2, fig3, fig4, fig5, fig6, cell_type='NDNF')
+
+#####################
+
+
 from physion.utils import plot_tools as pt
 from physion.analysis.read_NWB import Data, scan_folder_for_NWBfiles
 from physion.analysis.process_NWB import EpisodeData
@@ -635,7 +809,7 @@ generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann'
 
 #%%
 
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_test2')
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','Processed', 'intrinsic_img', '07_05_2025')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
