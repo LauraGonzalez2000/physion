@@ -1008,6 +1008,7 @@ class RetinotopicMappingTrial(object):
                 currfig = f1_231.imshow(self.altPosMap, vmin=ALTITUDE_RANGE[0], vmax=ALTITUDE_RANGE[1], cmap='hsv', interpolation='nearest')
             else:
                 currfig = f1_231.imshow(self.altPosMap, cmap='hsv', interpolation='nearest')
+
             f1.colorbar(currfig)
             f1_231.set_axis_off()
             f1_231.set_title('alt position')
@@ -1023,6 +1024,7 @@ class RetinotopicMappingTrial(object):
             f1_232.set_title('azi position')
             f1_233 = f1.add_subplot(233)
             currfig = f1_233.imshow(signMap, vmin=-1, vmax=1, cmap='jet', interpolation='nearest')
+        
             f1.colorbar(currfig)
             f1_233.set_axis_off()
             f1_233.set_title('sign map')
@@ -1030,8 +1032,10 @@ class RetinotopicMappingTrial(object):
             if isFixedRange:
                 currfig = f1_234.imshow(altPosMapf,
                         vmin=ALTITUDE_RANGE[0], vmax=ALTITUDE_RANGE[1], cmap='hsv', interpolation='nearest')
+                
             else:
                 currfig = f1_234.imshow(altPosMapf, cmap='hsv', interpolation='nearest')
+                
             f1.colorbar(currfig)
             f1_234.set_axis_off()
             f1_234.set_title('alt position filtered')
@@ -1041,13 +1045,16 @@ class RetinotopicMappingTrial(object):
                                         vmin=AZIMUTH_RANGE[0], vmax=AZIMUTH_RANGE[1],
                                         cmap='hsv', interpolation='nearest')
                 
+                
             else:
                 currfig = f1_235.imshow(aziPosMapf, cmap='hsv', interpolation='nearest')
+                
             f1.colorbar(currfig)
             plt.axis('off')
             f1_235.set_title('azi position filtered')
             f1_236 = f1.add_subplot(236)
             currfig = f1_236.imshow(signMapf, vmin=-1, vmax=1, cmap='jet', interpolation='nearest')
+            
             f1.colorbar(currfig)
             plt.axis('off')
             f1_236.set_title('sign map filtered')
@@ -1058,6 +1065,7 @@ class RetinotopicMappingTrial(object):
             if altPowerMapf is not None:
                 currfig = f2_121.imshow(array_nor(self.altPowerMap), cmap='hot', vmin=0, vmax=1,
                                         interpolation='nearest')
+                
                 f2.colorbar(currfig)
                 f2_121.set_title('alt power map')
                 f2_121.set_axis_off()
@@ -1065,6 +1073,7 @@ class RetinotopicMappingTrial(object):
             if aziPowerMapf is not None:
                 currfig = f2_122.imshow(array_nor(self.aziPowerMap), cmap='hot', vmin=0, vmax=1,
                                         interpolation='nearest')
+                
                 f2.colorbar(currfig)
                 f2_122.set_title('azi power map')
                 f2_122.set_axis_off()
@@ -1076,7 +1085,17 @@ class RetinotopicMappingTrial(object):
         self.signMap = signMap
         self.signMapf = signMapf
 
-        return altPosMapf, aziPosMapf, altPowerMapf, aziPowerMapf, signMap, signMapf
+        return {"altPosMapf": altPosMapf,
+                "aziPosMapf": aziPosMapf,
+                "altPowerMapf": altPowerMapf,
+                "aziPowerMapf": aziPowerMapf,
+                "signMap": signMap,
+                "signMapf": signMapf,
+                "fig_sign": f1 if (isPlot or onlySMplot) else None,
+                "fig_power": f2 if isPlot else None}
+    
+
+        #return altPosMapf, aziPosMapf, altPowerMapf, aziPowerMapf, signMap, signMapf
 
     def _getRawPatchMap(self, isPlot=False):
 

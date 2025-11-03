@@ -265,52 +265,61 @@ class PDF3_:
 
 class PDF4:
 
-    def __init__(self, 
-                 structure_dict={},
-                 debug=False):
-        
-        # figure in A4 format
-        self.fig, ax  = pt.figure(figsize=(8.27, 11.69))
-        ax.axis('off')
+    def __init__(self, structure_dict=None, debug=False):
+        if structure_dict is None:
+            structure_dict = {}
+
+        self.debug = debug
+
+        # --- Create A4 figure (in inches)
+        self.fig = plt.figure(figsize=(8.27, 11.69))
         self.AXs = {}
 
-        # build the axes one by one
-        X0, Y0, DX, DY = 0.12, 0.5, 6, 0.6
-        self.AXs['Notes'] = self.create_panel([X0, Y0, DX, DY], 'Notes')
-        self.AXs['Notes'].axis('off')
+        # --- Define panels using inch-based coordinates
+        # Format: X0, Y0, DX, DY (in inches)
+        self.AXs['Notes'] = self.create_panel([0.5, 0.5, 3, 2], 'Notes', hide_axis=True)
+        self.AXs['Vasculature'] = self.create_panel([4.5, 0.5, 5, 2], 'Vasculature')
+        self.AXs['Altitude_maps'] = self.create_panel([0.5, 2, 4, 4], 'Altitude maps')
+        self.AXs['Azimuth_maps'] = self.create_panel([4.5, 2, 4, 4], 'Azimuth maps')
 
-        X0, Y0, DX, DY = 0.12, 1.1, 6, 2
-        self.AXs['Vasculature'] = self.create_panel([X0, Y0, DX, DY], 'Vasculature')
+        self.AXs['Gradient'] = self.create_panel([0.5, 5, 4, 5], 'Gradient')
+        self.AXs['Power']    = self.create_panel([4.5, 6, 4, 2.5], 'Power')
 
-        X0, Y0, DX, DY = 0.12, 3.1, 6, 2
-        self.AXs['Altitude_maps'] = self.create_panel([X0, Y0, DX, DY], 'Altitude maps')
+        self.AXs['Notes2'] = self.create_panel([0.5, 8.5, 3, 2], 'Segmentation Parameters', hide_axis=True)
+        self.AXs['Patches'] = self.create_panel([3, 8.5, 4, 4], 'Patches')
+        self.AXs['Center'] = self.create_panel([5.5, 8.5, 4, 3], 'Center')
 
-        X0, Y0, DX, DY = 0.12, 5.1, 6, 2
-        self.AXs['Azimuth_maps'] = self.create_panel([X0, Y0, DX, DY], 'Azimuth maps')
+        # Optional: add debugging border boxes
+        if self.debug:
+            for ax in self.AXs.values():
+                for spine in ax.spines.values():
+                    spine.set_visible(True)
+                    spine.set_color('red')
+                    spine.set_linewidth(0.5)
 
-        X0, Y0, DX, DY = 0.12, 7.1, 6, 2
-        self.AXs['Gradient'] = self.create_panel([X0, Y0, DX, DY], 'Gradient')
+        plt.tight_layout()  # helps avoid overlap when saving
 
-        X0, Y0, DX, DY = 0.12, 9.1, 6, 2
-        self.AXs['Patches'] = self.create_panel([X0, Y0, DX, DY], 'Patches')
-
-        X0, Y0, DX, DY = 0.12, 11.1, 6, 2
-        self.AXs['Center'] = self.create_panel([X0, Y0, DX, DY], 'Center')
-
-
-
-    def create_panel(self, coords, title=None):
-        """ 
-        coords: (x0, y0, dx, dy)
-                from left to right
-                from top to bottom (unlike matplotlib)
+    # ------------------------------------------------------------------
+    def create_panel(self, coords_in_inches, title=None, hide_axis=False):
         """
-        coords[1] = 1-coords[1]-coords[3]
-        ax = pt.inset(self.fig, rect=coords)
+        coords_in_inches: [x0, y0, dx, dy] in inches
+                          left-to-right, top-to-bottom (A4 layout convention)
+        """
+        fig_w, fig_h = self.fig.get_size_inches()
+        x0, y0, dx, dy = coords_in_inches
 
+        # Convert to bottom-up and normalized coordinates
+        y0 = fig_h - y0 - dy
+        rect_norm = [x0 / fig_w, y0 / fig_h, dx / fig_w, dy / fig_h]
+
+        ax = self.fig.add_axes(rect_norm)
         if title:
             ax.set_title(title, loc='left', pad=2, fontsize=8)
+        if hide_axis:
+            ax.axis('off')
+
         return ax
+    
 
     def fill_PDF(self, 
                  dict_annotation, 
@@ -319,7 +328,9 @@ class PDF4:
                  image3, 
                  image4, 
                  image5, 
-                 image6): 
+                 image6, 
+                 image7, 
+                 segmentation_params): 
         
         for key in self.AXs:
             self.AXs[key].axis('off')
@@ -327,16 +338,22 @@ class PDF4:
             
             if key=='Notes':
                 self.AXs[key].axis('off')
+
+                recordings_text = "\n".join(f"• {day} — {time}" for day, time in zip(dict_annotation['Recordings'][0], dict_annotation['Recordings'][1]))
+
                 txt = (
-                    f"ID mouse: \n"
-                    f"Recordings: \n"
+                    f"File: {dict_annotation.get('name', 'N/A')}\n"
+                    f"Mouse ID: {dict_annotation.get('Subject_ID', 'N/A')}\n"
+                    f"Recordings:\n{recordings_text}\n"
                 )
-                self.AXs[key].text(0, 1, txt, va='top', ha='left', fontsize=10, wrap=True)
+
+                self.AXs[key].text(0.1, 0.9, txt, va='top', ha='left', fontsize=10, wrap=True)
                 self.AXs[key].axis('off')
+
             
             if key=='Vasculature':
                 self.AXs[key].imshow(image1)
-                
+            
             elif key=='Altitude_maps':
                 self.AXs[key].imshow(image2)
                 
@@ -346,8 +363,31 @@ class PDF4:
             elif key=='Gradient':
                 self.AXs[key].imshow(image4)
 
-            elif key=='Patches':
+            elif key=='Power':
                 self.AXs[key].imshow(image5)
 
-            elif key=='Center':
+            elif key=='Notes2':
+                self.AXs[key].axis('off')
+                txt = (f"phaseMapFilterSigma: {segmentation_params['phaseMapFilterSigma']}\n"
+                       f"signMapFilterSigma: {segmentation_params['signMapFilterSigma']}\n"
+                       f"signMapThr: {segmentation_params['signMapThr']}\n"
+                       f"eccMapFilterSigma: {segmentation_params['eccMapFilterSigma']}\n"
+                       f"splitLocalMinCutStep: {segmentation_params['splitLocalMinCutStep']}\n"
+                       f"mergeOverlapThr: {segmentation_params['mergeOverlapThr']}\n"
+                       f"closeIter: {segmentation_params['closeIter']}\n"
+                       f"openIter: {segmentation_params['openIter']}\n"
+                       f"dilationIter: {segmentation_params['dilationIter']}\n"
+                       f"borderWidth: {segmentation_params['borderWidth']}\n"
+                       f"smallPatchThr: {segmentation_params['smallPatchThr']}\n"
+                       f"visualSpacePixelSize: {segmentation_params['visualSpacePixelSize']}\n"
+                       f"visualSpaceCloseIter: {segmentation_params['visualSpaceCloseIter']}\n"
+                       f"splitOverlapThr: {segmentation_params['splitOverlapThr']}\n")
+                self.AXs[key].text(0.1, -0.3, txt, va='bottom', ha='left', fontsize=10, wrap=True)
+                self.AXs[key].axis('off')
+
+            elif key=='Patches':
                 self.AXs[key].imshow(image6)
+
+            elif key=='Center':
+                self.AXs[key].imshow(image7)
+            
