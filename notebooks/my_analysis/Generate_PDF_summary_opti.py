@@ -278,7 +278,7 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
         }
 
         settings = find_available_settings(data)
-        protocols = [p for p in data.protocols if (p != 'grey-10min') and (p != 'black-2min')]
+        protocols = [p for p in data.protocols if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
 
         ################################# FIGURES ###############################################################
         
@@ -366,11 +366,11 @@ def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8, 
         fig_p1 = pdf1.fig
 
         pdf2 = PDF2()
-        pdf2.fill_PDF2(fig5)
+        pdf2.fill_PDF2(fig5, fig10)
         fig_p2 = pdf2.fig
 
         pdf3 = PDF3()
-        pdf3.fill_PDF3(fig6, fig7, fig8, fig9, fig10)
+        pdf3.fill_PDF3(fig6, fig7, fig8, fig9)
         fig_p3 = pdf3.fig
 
         output_path = f'C:/Users/laura.gonzalez/Output_expe/In_Vivo/{cell_type}/Summary_PDF/{os.path.splitext(dict_annotation['name'])[0]}_summary.pdf'
@@ -428,7 +428,7 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         sig_arr = np.array(sig_list)
         val_arr = np.array(val_list)
 
-        # ✅ Compute per-ROI positive/negative significance
+        #Compute per-ROI positive/negative significance
         resp_cond = sig_arr
         pos_cond = sig_arr & (val_arr > 0)
         neg_cond = sig_arr & (val_arr < 0)
@@ -437,7 +437,7 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         pos_cond_s.append(pos_cond)
         neg_cond_s.append(neg_cond)
 
-        # Compute per-session proportions
+        #Compute per-session proportions
         pos = np.sum(pos_cond) / len(sig_arr)
         neg = np.sum(neg_cond) / len(sig_arr)
 
@@ -536,7 +536,7 @@ def generate_figures_GROUP(data_s, subplots_n):
     start_time = time.time()  
 
     protocols = [p for p in data_s[0].protocols 
-                        if (p != 'grey-10min') and (p != 'black-2min')]
+                        if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
 
     fig1, _     = plot_dFoF_per_protocol(data_s=data_s, protocols=protocols)
 
@@ -660,7 +660,7 @@ for idx, filename in enumerate(SESSIONS['files']):
 # ## All individual files
 #%%
 
-generate_figures(data_s, cell_type='NDNF', subplots_n=9, data_type = 'Sofia')
+generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
 
 #%% [mardown]
 # ## GROUPED ANALYSIS

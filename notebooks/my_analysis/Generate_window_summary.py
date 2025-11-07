@@ -128,15 +128,15 @@ def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, fig7, segmen
 ######################################################################################################
 
 #%%
-base_folder = os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch1','Processed', 'intrinsic_img', '07_05_2025')
+base_folder = os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch2','Processed', 'intrinsic_img', '2025_11_06')
 
 
-segmentation_params={'phaseMapFilterSigma': 2.,
-                        'signMapFilterSigma': 1.,
-                        'signMapThr': 0.8,
+segmentation_params={'phaseMapFilterSigma': 8.,
+                        'signMapFilterSigma': 12.,
+                        'signMapThr': 0.55,
                         'eccMapFilterSigma': 10.,
-                        'splitLocalMinCutStep': 5.,
-                        'mergeOverlapThr': 0.4,
+                        'splitLocalMinCutStep': 15.,
+                        'mergeOverlapThr': 1,
                         'closeIter': 3,
                         'openIter': 3,
                         'dilationIter': 15,
@@ -144,7 +144,7 @@ segmentation_params={'phaseMapFilterSigma': 2.,
                         'smallPatchThr': 100,
                         'visualSpacePixelSize': 0.5,
                         'visualSpaceCloseIter': 15,
-                        'splitOverlapThr': 1.1}
+                        'splitOverlapThr': 1.3}
 
 
 # Loop over all subfolders (each expected to be a timestamp like "15-09-29", etc.)
@@ -161,7 +161,7 @@ for subfolder in sorted(os.listdir(base_folder)):
 
     print(f"Processing file: {datafile}")
 
-    df = pd.read_excel(os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch1', "DataTable.xlsx"))
+    df = pd.read_excel(os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch2', "DataTable.xlsx"))
     recordings_per_subject_t = (df.groupby('subject')['time'].apply(list).to_dict())
     recordings_per_subject_d = (df.groupby('subject')['day'].apply(list).to_dict())
     recordings_t = recordings_per_subject_t.get(subject, [])

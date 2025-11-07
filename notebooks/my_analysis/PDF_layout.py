@@ -124,6 +124,9 @@ class PDF2:
         X0, Y0, DX, DY = 0.12, 0.5, 6, 8
         self.AXs['Resp_protocol'] = self.create_panel([X0, Y0, DX, DY], 'dFoF for each protocol')
 
+        X0, Y0, DX, DY = 0.12, 6.5, 6, 1.5
+        self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'Variation dFoF across protocols')
+
     def create_panel(self, coords, title=None):
             """ 
             coords: (x0, y0, dx, dy)
@@ -138,11 +141,17 @@ class PDF2:
             return ax
     
     def fill_PDF2(self, 
-                 image1): 
+                 image1, 
+                 image2): 
+        
         for key in self.AXs:
             self.AXs[key].axis('off')
             if key=='Resp_protocol':
                 self.AXs[key].imshow(image1)
+            
+            elif key=='barplots':
+                self.AXs[key].imshow(image2)
+            
 
 
 class PDF3:
@@ -168,9 +177,6 @@ class PDF3:
         X0, Y0, DX, DY = 0.12, 5, 6, 1.5
         self.AXs['responsiveness'] = self.create_panel([X0, Y0, DX, DY], 'Responsiveness pie plots')
 
-        X0, Y0, DX, DY = 0.12, 6.5, 6, 1.5
-        self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'Variation dFoF across protocols')
-
 
     def create_panel(self, coords, title=None):
             """ 
@@ -189,8 +195,7 @@ class PDF3:
                  image1, 
                  image2, 
                  image3, 
-                 image4,
-                 image5): 
+                 image4): 
         for key in self.AXs:
             self.AXs[key].axis('off')
 
@@ -206,10 +211,7 @@ class PDF3:
             elif key=='responsiveness':
                 self.AXs[key].imshow(image4)
 
-            elif key=='barplots':
-                self.AXs[key].imshow(image5)
-
-
+        
 
 class PDF3_:
 

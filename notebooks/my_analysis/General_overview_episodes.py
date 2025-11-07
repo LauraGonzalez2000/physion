@@ -234,7 +234,7 @@ def plot_dFoF_per_protocol2(data_s,
     
     # protocols (assume same across sessions)
     protocols = [p for p in data_s[0].protocols 
-                 if (p != 'grey-10min') and (p != 'black-2min')]
+                 if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
     
 
 

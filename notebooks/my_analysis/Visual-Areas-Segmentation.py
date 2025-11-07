@@ -25,8 +25,8 @@ from PIL import Image
 
 # %%
 dataFolder = os.path.join(os.path.expanduser('~'), 'DATA', 
-                        'In_Vivo_experiments', 'NDNF-Cre-batch1', 'Processed',
-                        'intrinsic_img','07_05_2025', '16-14-44')
+                        'In_Vivo_experiments', 'NDNF-Cre-batch2', 'Processed',
+                        'intrinsic_img','2025_11_06', '13-54-58')
 
 
  
