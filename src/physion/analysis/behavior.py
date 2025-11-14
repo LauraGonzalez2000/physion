@@ -11,7 +11,7 @@ def population_analysis(FILES,
 
     times, fracs_running, subjects = [], [], []
     if ax is None:
-        fig, ax = pt.figure(1, figsize=(5,1.3))
+        fig, ax = pt.figure((1,1), figsize=(5,1.3))
     else:
         fig = None
 
