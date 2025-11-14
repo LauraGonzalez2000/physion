@@ -126,27 +126,47 @@ def plot_responsiveness_per_protocol(ep, nROIs, AX, idx, p):
     session_summary = {'significant':[], 'value':[]}
 
     for roi_n in range(nROIs):
+
         t0 = max([0, ep.time_duration[0]-1.5])
+
         stat_test_props = dict(interval_pre=[-1.5,0],                                   
                                 interval_post=[t0, t0+1.5],                                   
                                 test='ttest', 
                                 sign='both')
 
+
+        #roi_summary_data = ep.compute_summary_data(stat_test_props=stat_test_props,
+        #                                           exclude_keys=['repeat'],
+        #                                           #exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
+        #                                           response_significance_threshold=0.05,
+        #                                           response_args=dict(roiIndex=roi_n))
+        
+        #print("roi summary data1 : ", roi_summary_data)
+
+
         roi_summary_data = ep.compute_summary_data(stat_test_props=stat_test_props,
-                                                   exclude_keys=['repeat'],
-                                                   #exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
+                                                   #exclude_keys=['repeat'],
+                                                   exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
                                                    response_significance_threshold=0.05,
                                                    response_args=dict(roiIndex=roi_n))
+        
+        #print("significant : ", bool(roi_summary_data['significant'][0]))
     
         session_summary['significant'].append(bool(roi_summary_data['significant'][0]))
         session_summary['value'].append(roi_summary_data['value'][0])
 
     resp_cond = np.array(session_summary['significant'])
+    #print('resp cond pie plots :\n', resp_cond)
+    #print('n responsive : ', sum(resp_cond))
 
+    #print('pos sign :\n', ([session_summary['value'][i]>0 for i in range(len(session_summary['value']))]))
+    #print('neg sign :\n', ([session_summary['value'][i]<0 for i in range(len(session_summary['value']))]))
+
+                            
     pos_cond = resp_cond & ([session_summary['value'][i]>0 for i in range(len(session_summary['value']))])
     neg_cond = resp_cond & ([session_summary['value'][i]<0 for i in range(len(session_summary['value']))])
 
-    print(f'{np.sum(resp_cond)} significant ROI ({np.sum(pos_cond)} positive, {np.sum(neg_cond)} negative) out of {len(session_summary['significant'])} ROIs')
+    print(f'Protocol {p} : {sum(resp_cond)} significant ROI ({np.sum(pos_cond)} positive, {np.sum(neg_cond)} negative) out of {len(session_summary['significant'])} ROIs')
 
     pos_frac = np.sum(pos_cond)/nROIs
     neg_frac = np.sum(neg_cond)/nROIs
@@ -157,7 +177,9 @@ def plot_responsiveness_per_protocol(ep, nROIs, AX, idx, p):
     pt.pie(data=[pos_frac, neg_frac, ns_frac], ax = AX[idx], COLORS = colors)#, pie_labels = ['%.1f%%' % (100*pos),'%.1f%%' % (100*neg), '%.1f%%' % (100*ns)] )
     
     AX[idx].set_title(f'{p.replace('Natural-Images-4-repeats','natural-images')}')
-    pt.annotate(AX[idx], '+ resp=%.1f%%' % (100*pos_frac), (1, 0), ha='right', va='top')
+    pt.annotate(AX[idx], '+ resp=%.1f%% ' % (100*pos_frac), (1, 0), ha='right', va='top')
+    #pt.annotate(AX[idx], f'{np.sum(pos_cond)}', (1.2, 0), ha='right', va='top')
+    #pt.annotate(AX[idx], f'{np.sum(neg_cond)}', (1.6, 0), ha='right', va='top')
     pt.annotate(AX[idx], '- resp=%.1f%%' % (100*neg_frac), (1, -0.2), ha='right', va='top')
 
     pt.annotate(AX[0], f'{nROIs} ROIs', (1, -0.4), ha='right', va='top')
@@ -218,43 +240,43 @@ def get_roiIndex(data, type='pos'):
                                                     response_significance_threshold=0.05,
                                                     response_args=dict(roiIndex=roi_n))
         
-        print(roi_summary_data)
+        
         session_summary['significant'].append(bool(roi_summary_data['significant']))
         session_summary['value'].append(roi_summary_data['value'])
 
-    for i in range(len(session_summary['significant'])):
+    resp_cond = session_summary['significant']
+    pos_cond = resp_cond.copy()
+    neg_cond = resp_cond.copy()
+ 
+    for i in range(len(resp_cond)):
+        if resp_cond[i]==False:
+            pos_cond[i]=False
+            neg_cond[i]=False
+        else: 
+            if session_summary['value'][i]>0:
+                pos_cond[i]=True
+                neg_cond[i]=False
+            else: 
+                pos_cond[i]=False
+                neg_cond[i]=True
 
-        resp_cond = np.array(session_summary['significant'][i])
-        pos_cond = resp_cond & (roi_summary_data['value'][0]>0)
-        neg_cond = resp_cond & (roi_summary_data['value'][0]<0)
-
-        pos_roi = np.arange(data.nROIs)[pos_cond]
-        neg_roi = np.arange(data.nROIs)[neg_cond]
-        ns_roi = np.arange(data.nROIs)[~resp_cond]
-
-
-    resp_cond = np.array(session_summary['significant'])
-    pos_cond = resp_cond & (roi_summary_data['value'][0]>0)
-    neg_cond = resp_cond & (roi_summary_data['value'][0]<0)
-
-    pos_roi = np.arange(data.nROIs)[pos_cond]
-    neg_roi = np.arange(data.nROIs)[neg_cond]
-    ns_roi = np.arange(data.nROIs)[~resp_cond]
+    pos_roi = np.where(pos_cond)[0]
+    neg_roi = np.where(neg_cond)[0]
+    ns_roi = np.where(~np.array(resp_cond))[0]
 
     found = True
 
     if type=='pos':
         if len(pos_roi) > 0:
-            roiIndex = random.choice(np.arange(data.nROIs)[pos_cond])
+            roiIndex = random.choice(pos_roi)
         else:
             print("No positive ROIs found — choosing from non-significant set instead.")
             found = False
             roiIndex = random.choice(ns_roi)
 
-    
     elif type=='neg':
         if len(neg_roi) > 0:
-            roiIndex = random.choice(np.arange(data.nROIs)[neg_cond])
+            roiIndex = random.choice(neg_roi)
         else:
             print("No negative ROIs found — choosing from non-significant set instead.")
             roiIndex = random.choice(ns_roi)
@@ -325,6 +347,7 @@ def generate_figures(data_s, cell_type='nan', subplots_n=9, data_type = 'Sofia')
             
               
         fig5, _ = plot_dFoF_per_protocol(data_s=[data], protocols=protocols, subplots_n=subplots_n)
+        
         roiIndex, found = get_roiIndex(data, type='pos')
         fig6, _ = plot_dFoF_per_protocol2(data_s=[data], roiIndex=roiIndex, found=found)
         roiIndex, found = get_roiIndex(data, type='neg')
@@ -565,11 +588,11 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
     try: 
         
         pdf1 = PDF2()
-        pdf1.fill_PDF2(fig1)
+        pdf1.fill_PDF2(fig1, fig4)
         fig_p1 = pdf1.fig
         
         pdf2 = PDF3_()
-        pdf2.fill_PDF3(fig2, fig3, fig4)
+        pdf2.fill_PDF3(fig2, fig3)
         fig_p2 = pdf2.fig
 
         output_path = f'C:/Users/laura.gonzalez/Output_expe/In_Vivo/{cell_type}/Summary_PDF/GROUP_summary.pdf'
@@ -594,8 +617,8 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
 # ## YANN DATASET
 
 #%%
-'''
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs-test')
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -614,18 +637,18 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-'''
+
 #%% [markdown]
 # ## All individual files
 #%%
-'''
+
 generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann')
-'''
+
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
+fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
 
 ##################################################################################################################################
 ##################################################################################################################################
@@ -634,8 +657,8 @@ generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann'
 # ## NDNF CRE BATCH 1
 
 #%%
-
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_test2')
+'''
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_final')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -655,19 +678,19 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-
+'''
 #%% [markdown]
 # ## All individual files
 #%%
 
-generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
+#generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
 
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-'''
-fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=9)
-create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
-'''
+
+#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
+
 ##############################################################################################################
 ##############################################################################################################

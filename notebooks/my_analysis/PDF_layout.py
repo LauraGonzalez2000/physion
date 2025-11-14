@@ -121,10 +121,10 @@ class PDF2:
         ax.axis('off')
         self.AXs = {}
 
-        X0, Y0, DX, DY = 0.12, 0.5, 6, 8
+        X0, Y0, DX, DY = 0.12, 0.12, 6, 5
         self.AXs['Resp_protocol'] = self.create_panel([X0, Y0, DX, DY], 'dFoF for each protocol')
 
-        X0, Y0, DX, DY = 0.12, 6.5, 6, 1.5
+        X0, Y0, DX, DY = 0.12, 5.5, 6, 1.5
         self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'Variation dFoF across protocols')
 
     def create_panel(self, coords, title=None):
@@ -152,8 +152,6 @@ class PDF2:
             elif key=='barplots':
                 self.AXs[key].imshow(image2)
             
-
-
 class PDF3:
 
     def __init__(self, 
@@ -211,8 +209,6 @@ class PDF3:
             elif key=='responsiveness':
                 self.AXs[key].imshow(image4)
 
-        
-
 class PDF3_:
 
     def __init__(self, 
@@ -230,9 +226,6 @@ class PDF3_:
         X0, Y0, DX, DY = 0.12, 2.0, 6, 1.5
         self.AXs['fract_resp_means'] = self.create_panel([X0, Y0, DX, DY], 'fraction responsive neurons (means of sessions)')
 
-        X0, Y0, DX, DY = 0.12, 3.5, 6, 1.5
-        self.AXs['barplots'] = self.create_panel([X0, Y0, DX, DY], 'Variation dFoF across protocols')
-
 
     def create_panel(self, coords, title=None):
         """ 
@@ -249,8 +242,7 @@ class PDF3_:
     
     def fill_PDF3(self, 
                  image1, 
-                 image2, 
-                 image3): 
+                 image2): 
         for key in self.AXs:
             self.AXs[key].axis('off')
 
@@ -260,11 +252,6 @@ class PDF3_:
             elif key=='fract_resp_means':
                 self.AXs[key].imshow(image2)
             
-            elif key=='barplots':
-                self.AXs[key].imshow(image3)
-            
-                
-
 class PDF4:
 
     def __init__(self, structure_dict=None, debug=False):

@@ -26,15 +26,10 @@ from PIL import Image
 # %%
 dataFolder = os.path.join(os.path.expanduser('~'), 'DATA', 
                         'In_Vivo_experiments', 'NDNF-Cre-batch2', 'Processed',
-                        'intrinsic_img','2025_11_06', '13-54-58')
+                        'intrinsic_img','2025_11_06', '15-49-32')
 
 
  
-# retinotopic mapping data
-maps = np.load(os.path.join(dataFolder, 'raw-maps.npy') , 
-                allow_pickle=True).item()
-#maps = dict(np.load(os.path.join(dataFolder, 'raw-maps.npz') , 
-#               allow_pickle=True))
 
 # vasculature picture
 imVasc = np.array(Image.open(os.path.join(dataFolder, 'vasculature.tif')))
@@ -44,6 +39,13 @@ plt.axis('off');
 
 # %% [markdown]
 # # Retinotopic Maps
+
+
+# retinotopic mapping data
+maps = np.load(os.path.join(dataFolder, 'raw-maps.npy') , 
+                allow_pickle=True).item()
+#maps = dict(np.load(os.path.join(dataFolder, 'raw-maps.npz') , 
+#               allow_pickle=True))
 
 # %%
 plot_retinotopic_maps(maps, map_type='altitude');
@@ -58,12 +60,12 @@ plot_retinotopic_maps(maps, map_type='azimuth');
 data = build_trial_data(maps)
 data['vasculatureMap'] = imVasc[::int(imVasc.shape[0]/data['aziPosMap'].shape[0]),\
                                 ::int(imVasc.shape[1]/data['aziPosMap'].shape[1])]
-segmentation_params={'phaseMapFilterSigma': 2.,
-                    'signMapFilterSigma': 2.5,
+segmentation_params={'phaseMapFilterSigma': 1.5,
+                    'signMapFilterSigma': 2,
                     'signMapThr': 0.5,
                     'eccMapFilterSigma': 10.,
-                    'splitLocalMinCutStep': 5.,
-                    'mergeOverlapThr': 0.4,
+                    'splitLocalMinCutStep': 10.,
+                    'mergeOverlapThr': 0.2,
                     'closeIter': 3,
                     'openIter': 3,
                     'dilationIter': 15,
@@ -71,13 +73,13 @@ segmentation_params={'phaseMapFilterSigma': 2.,
                     'smallPatchThr': 100,
                     'visualSpacePixelSize': 0.5,
                     'visualSpaceCloseIter': 15,
-                    'splitOverlapThr': 1.1}
+                    'splitOverlapThr': 1.2}
 data['params'] = segmentation_params
 trial = RetinotopicMapping.RetinotopicMappingTrial(**data)
 trial.processTrial(isPlot=False) # TURN TO TRUE TO VISUALIZE THE SEGMENTATION STEPS
 _ = trial._getSignMap(onlySMplot=True)
 
-# %%
+
 fig, ax = pt.figure(ax_scale=(5,5))
 h = RetinotopicMapping.plotPatches(trial.finalPatches, 
                                    plotaxis=ax)

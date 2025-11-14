@@ -82,7 +82,7 @@ def plot_dFoF_per_protocol(data_s,
                            running_speed_threshold=0.1, 
                            metric=None, 
                            protocols = [], 
-                           subplots_n=9):
+                           subplots_n=5):
     """
     Plot dFoF per protocol for a single session or across multiple sessions.
 
@@ -180,17 +180,17 @@ def plot_dFoF_per_protocol(data_s,
         if mode == "single":
             AX[-1][0].annotate('single session: %s ,   n=%i ROIs' %
                                (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),
-                               (0, 0), xycoords='axes fraction')
+                               (0, -0.2), xycoords='axes fraction')
         else:
             AX[-1][0].annotate('average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),
-                               (0, 0), xycoords='axes fraction')
+                               (0, -0.2), xycoords='axes fraction')
     else:
         if mode == "single":
             AX[-1][0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data_s[0].filename.replace('.nwb','')),
-                               (0, 0), xycoords='axes fraction', fontsize=7)
+                               (0, -0.2), xycoords='axes fraction', fontsize=7)
         else:
             AX[-1][0].annotate('roi #%i , average over %i sessions' % (1+roiIndex, len(data_s)),
-                               (0, 0), xycoords='axes fraction', fontsize=7)
+                               (0, -0.2), xycoords='axes fraction', fontsize=7)
 
     pt.set_common_ylims(AX)
     for ax in pt.flatten(AX):
@@ -255,7 +255,9 @@ def plot_dFoF_per_protocol2(data_s,
             else:
                 cond = episodes.find_episode_cond()
             
-            varied_keys = [k for k in episodes.varied_parameters.keys() if k!='repeat']
+
+            # TO FIX : find a better solution
+            varied_keys = [k for k in episodes.varied_parameters.keys() if (k != 'repeat') and (k != 'angle') and (k != 'contrast') and (k != 'speed') and (k != 'Image-ID') and (k != 'seed')]
             varied_values = [episodes.varied_parameters[k] for k in varied_keys]
 
 
