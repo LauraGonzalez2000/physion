@@ -79,7 +79,7 @@ def plot_dFoF_per_protocol(data_s,
                            dataIndex=None,
                            roiIndex=None,
                            pupil_threshold=2.9,
-                           running_speed_threshold=0.1, 
+                           running_speed_threshold=0.5, 
                            metric=None, 
                            protocols = [], 
                            subplots_n=5):
