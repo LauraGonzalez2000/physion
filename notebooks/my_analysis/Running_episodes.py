@@ -82,104 +82,11 @@ def plot_locomotion(data,
     
     return fig, AX
 
-def plot_average_visually_evoked_activity(data,
-                                          roiIndex=None,
-                                          pupil_threshold=2.4,
-                                          running_speed_threshold=0.5):
-    
-    #protocols = [p for p in data.protocols if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping') ] 
-
-    # protocols (assume same across sessions)
-    protocols = [p for p in data_s[0].protocols 
-                 if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
-    
-    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(5)], figsize=(7,5))
-
-    #fig, AX = plt.subplots(5, len(protocols),
-    #                          figsize=(7,5))
-    pt.plt.subplots_adjust(wspace=0.1, hspace=0.1)
-
-    for p, protocol in enumerate(protocols):
-
-        behav_episodes = EpisodeData(data, 
-                             quantities=['Pupil', 'Running-Speed'],
-                             protocol_name=protocol,
-                             prestim_duration=0,
-                             verbose=False)
-        
-        # HAcond: high arousal condition
-        
-        HAcond = compute_high_arousal_cond(behav_episodes, 
-                                           pre_stim = pre_stim,
-                                           pupil_threshold = pupil_threshold, 
-                                           running_speed_threshold = running_speed_threshold, 
-                                           metric = 'locomotion')
-        
-        
-        episodes = EpisodeData(data,
-                               quantities=['dFoF'],
-                               protocol_name=protocol,
-                               verbose=False)
-        varied_keys = [k for k in episodes.varied_parameters.keys() if k!='repeat']
-        varied_values = [episodes.varied_parameters[k] for k in varied_keys]
-
-        AX[0][p].annotate(protocol.replace('Natural-Images-4-repeats','natural-images'),
-                          (0.5,1.4),
-                          xycoords='axes fraction', ha='center')
-
-        i=0
-        
-        for values in itertools.product(*varied_values):
-            
-            stim_cond = episodes.find_episode_cond(key=varied_keys, value=values)
-            
-            if np.sum(~HAcond & stim_cond)>1:
-                plot_trial_average(episodes, 
-                                   roiIndex=roiIndex,
-                                   condition=stim_cond & (~HAcond),
-                                   with_std=False, with_stim=True,
-                                   color='tab:blue',
-                                   AX=[[AX[i][p]]], no_set=True, 
-                                   ylim=[0,1.5])
-            
-            if np.sum(HAcond & stim_cond)>1:
-                plot_trial_average(episodes, 
-                                   roiIndex=roiIndex,
-                                   condition=stim_cond & HAcond,
-                                   with_std=False, with_stim=True,
-                                   color='tab:orange',
-                                   AX=[[AX[i][p]]], no_set=True)
-
-            i+=1
-
-            if roiIndex is None:
-                AX[-1][0].annotate('single session ,   rec: %s \n --> mean$\pm$s.d. over n=%i ROIs' % (\
-                                                                data.filename.replace('.nwb',''),data.nROIs),
-                                (0, 0),
-                                xycoords='axes fraction')
-            else:
-                AX[-1][0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data.filename.replace('.nwb','')),
-                                (0, 0), xycoords='axes fraction')
-
-            pt.set_common_ylims(AX)
-            for ax in pt.flatten(AX):
-                ax.axis('off')
-                if np.isfinite(ax.dataLim.x0) and ax==AX[0][0]:
-                    pt.draw_bar_scales(ax,
-                                    Xbar=1., Xbar_label='1s',
-                                    Ybar=1, Ybar_label='1$\Delta$F/F', fontsize=7)
-            pt.set_common_xlims(AX)
-
-            
-
-    return fig
-
-def plot_average_visually_evoked_activity_all(
-        data_s,
-        dataIndex=None,
-        roiIndex=None,
-        pupil_threshold=2.4,
-        running_speed_threshold=0.5):
+def plot_average_visually_evoked_activity(data_s,
+                                              dataIndex=None,
+                                              roiIndex=None,
+                                              pupil_threshold=2.4,
+                                              running_speed_threshold=0.5):
 
     """
     Computes and plots average visually-evoked activity across sessions.
@@ -189,7 +96,12 @@ def plot_average_visually_evoked_activity_all(
     Only the final average across files is plotted (mean ± SEM).
     """
 
-    mode = "single" if dataIndex is not None else "average"
+
+    if dataIndex is not None: 
+        data_s = [data_s[dataIndex]]
+        mode = 'single'
+    else: 
+        mode = 'average'
 
     protocols = [p for p in data_s[0].protocols
                  if (p not in ['grey-10min', 'black-2min', 'quick-spatial-mapping'])]
@@ -222,10 +134,10 @@ def plot_average_visually_evoked_activity_all(
         for protocol in protocols:
 
             episodes = EpisodeData(session,
-                                         quantities=[ 'Running-Speed', 'dFoF'],
-                                         protocol_name=protocol,
-                                         prestim_duration=0,
-                                         verbose=False)
+                                   quantities=[ 'Running-Speed', 'dFoF'],
+                                   protocol_name=protocol,
+                                   prestim_duration=0,
+                                   verbose=False)
 
             HAcond = compute_high_arousal_cond(episodes,
                                                pre_stim=0,
@@ -245,41 +157,54 @@ def plot_average_visually_evoked_activity_all(
                         # ------ LOW AROUSAL ------
                         cond_r = stim_cond & (~HAcond)
                         if np.sum(cond_r) > 1:
-                            trace = episodes.dFoF[cond_r]   # shape: trials × time × ROI
+
+                            trace = episodes.dFoF[cond_r]   # shape: trials × ROI × time
+
                             if roiIndex is not None:
-                                trace = trace[:, :, roiIndex]
-                            trace = np.nanmean(trace, axis=0)
-                            RESULTS[protocol]['traces_r'][key][value[0]].append(trace)
+                                trace = trace[:, roiIndex, :]
+                                RESULTS[protocol]['traces_r'][key][value[0]].append(trace)
+
+                            else: 
+                                trace = np.nanmean(trace, axis=0)
+                                RESULTS[protocol]['traces_r'][key][value[0]].append(trace)
                             
                         # ------ HIGH AROUSAL ------
                         cond_a = stim_cond & HAcond
                         if np.sum(cond_a) > 1:
-                            trace = episodes.dFoF[cond_a]   # shape: trials × time × ROI
+
+                            trace = episodes.dFoF[cond_a]   # shape: trials × ROI × time
+                        
                             if roiIndex is not None:
-                                trace = trace[:, :, roiIndex]
-                            trace = np.nanmean(trace, axis=0)
-                            RESULTS[protocol]['traces_a'][key][value[0]].append(trace)
+                                trace = trace[:, roiIndex, :]
+                                RESULTS[protocol]['traces_a'][key][value[0]].append(trace)
+                            else:
+                                trace = np.nanmean(trace, axis=0)
+                                RESULTS[protocol]['traces_a'][key][value[0]].append(trace)
             else:  
                 stim_cond = episodes.find_episode_cond()
                 # ------ LOW AROUSAL ------
                 cond_r = stim_cond & (~HAcond)
                 if np.sum(cond_r) > 1:
-                    trace = episodes.dFoF[cond_r]   # shape: trials × time × ROI
+                    trace = episodes.dFoF[cond_r]   # shape: trials × ROI × time
                     if roiIndex is not None:
-                        trace = trace[:, :, roiIndex]
-                    trace = np.nanmean(trace, axis=0)
-                    RESULTS[protocol]['traces_r']['no_key']['no_val'].append(trace)
+                        trace = trace[:, roiIndex, :]
+                        RESULTS[protocol]['traces_r']['no_key']['no_val'].append(trace)
+                    else: 
+                        trace = np.nanmean(trace, axis=0)
+                        RESULTS[protocol]['traces_r']['no_key']['no_val'].append(trace)
 
                 # ------ HIGH AROUSAL ------
                 cond_a = stim_cond & HAcond
                 if np.sum(cond_a) > 1:
-                    trace = episodes.dFoF[cond_a]   # shape: trials × time × ROI
+                    trace = episodes.dFoF[cond_a]   # shape: trials × ROI × time
                     if roiIndex is not None:
-                        trace = trace[:, :, roiIndex]
-                    trace = np.nanmean(trace, axis=0)  
-                    RESULTS[protocol]['traces_a']['no_key']['no_val'].append(trace)
+                        trace = trace[:, roiIndex, :]
+                        RESULTS[protocol]['traces_a']['no_key']['no_val'].append(trace)
+                    else:
+                        trace = np.nanmean(trace, axis=0)  
+                        RESULTS[protocol]['traces_a']['no_key']['no_val'].append(trace)
     
-    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(5)], figsize=(7,5))
+    fig, AX = pt.figure(axes_extents=[[ [1,1] for _ in protocols ] for _ in range(5)], figsize=(7,6))
     pt.plt.subplots_adjust(wspace=0.3)
 
     for p, protocol in enumerate(protocols):
@@ -300,6 +225,8 @@ def plot_average_visually_evoked_activity_all(
                     # ---- HIGH AROUSAL ----
                     if len(RESULTS[protocol]['traces_a'][key][value[0]]) > 0:
                         arr = np.vstack(RESULTS[protocol]['traces_a'][key][value[0]])
+                        #print(arr)
+                        #print(len(arr))
                         mean1 = arr.mean(axis=0)
                         sem = arr.std(axis=0) / np.sqrt(arr.shape[0])
 
@@ -311,18 +238,26 @@ def plot_average_visually_evoked_activity_all(
                     # ---- LOW AROUSAL ----
                     if len(RESULTS[protocol]['traces_r'][key][value[0]]) > 0:
                         arr = np.vstack(RESULTS[protocol]['traces_r'][key][value[0]])
-                        mean2 = arr.mean(axis=0)
-                        sem = arr.std(axis=0) / np.sqrt(arr.shape[0])
-
-                        x = np.arange(len(mean2))
                         x = episodes.t
-                        ax.plot(x, mean2, color='tab:blue')
-                        ax.fill_between(x, mean2 - sem, mean2 + sem,
-                                        color='tab:blue', alpha=0.25)
+                        #print(arr)
+                        #print(len(arr))
+
+                        if len(arr)==1: ax.plot(x, arr, color='tab:blue')
+                            
+                        if len(arr)>1:
+                            mean2 = arr.mean(axis=0)
+                            sem = arr.std(axis=0) / np.sqrt(arr.shape[0])
+                            ax.plot(x, mean2, color='tab:blue')
+                            ax.fill_between(x, mean2 - sem, mean2 + sem,
+                                            color='tab:blue', alpha=0.25)
+                            
                     ax.set_xlabel("Time (s)")
                     ax.set_ylabel("ΔF/F")
                     i+=1
-                    y1 = 1.2 * max(np.max(mean1), np.max(mean2))
+                    try:
+                        y1 = 1.2 * max(np.max(mean1), np.max(mean2))
+                    except:
+                        y1 = 1.2 * max(mean2)
                     ax.fill_between([0, np.mean(episodes.time_duration)], y1 = y1, color='grey', alpha=.2, lw=0)
                     
         else: 
@@ -351,7 +286,10 @@ def plot_average_visually_evoked_activity_all(
                                 color='tab:blue', alpha=0.25)
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("ΔF/F")
-            y1 = 1.2 * max(np.max(mean1), np.max(mean2))
+            try: 
+                y1 = 1.2 * max(np.max(mean1), np.max(mean2))
+            except: 
+                y1 = 1.2 * max(mean2)
             ax.fill_between([0,np.mean(episodes.time_duration)], y1 = y1, color='grey', alpha=.2, lw=0)
 
 
@@ -363,24 +301,18 @@ def plot_average_visually_evoked_activity_all(
     # annotate session or ROI info
     if roiIndex is None:
         if mode == "single":
-            AX[-1][0].annotate('single session: %s ,   n=%i ROIs' %
-                            (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),
-                            (0, -0.2), xycoords='axes fraction')
+            fig.text(0.0, -0.02,'single session: %s ,   n=%i ROIs' %
+                                (data_s[0].filename.replace('.nwb',''), data_s[0].nROIs),fontsize=7)
         else:
-            AX[-1][0].annotate('average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),
-                            (0, -0.2), xycoords='axes fraction')
+            fig.text(0.0, -0.02,'average over %i sessions ,   mean$\\pm$SEM across sessions' % len(data_s),fontsize=7)
+            
     else:
         if mode == "single":
-            AX[-1][0].annotate('roi #%i ,   rec: %s' % (1+roiIndex, data_s[0].filename.replace('.nwb','')),
-                            (0, -0.2), xycoords='axes fraction', fontsize=7)
+            fig.text(0.0, -0.02,'single session: %s ,   roi #%i' %
+                                (data_s[0].filename.replace('.nwb',''), 1+roiIndex),fontsize=7)
         else:
-            AX[-1][0].annotate('roi #%i , average over %i sessions' % (1+roiIndex, len(data_s)),
-                            (0, -0.2), xycoords='axes fraction', fontsize=7)
-    
-    #pt.set_common_ylims(AX)
-    #for ax in pt.flatten(AX):
-    #    ax.axis('off')
-    #pt.set_common_xlims(AX)
+            fig.text(0.0, -0.02,'average over %i sessions ,  roi #%i ' % 
+                                (len(data_s), 1+roiIndex),fontsize=7)
 
     for ax in pt.flatten(AX):
         if len(ax.lines)==0 and len(ax.patches)==0 and len(ax.images)==0:
@@ -418,16 +350,38 @@ plot_locomotion(data,
                 pre_stim = 1)
 
 #%%
-################### Plot average activity for all protocols ############################
+################### Plot average activity for all protocols one session ############################
+dataIndex = 7
+data = Data(SESSIONS['files'][dataIndex], verbose=False)
+data.build_dFoF(**dFoF_options, verbose=False)
+
+#%%
+data_s = [data]
+#%%
+fig = plot_average_visually_evoked_activity(data_s,
+                                            dataIndex = 0, 
+                                            roiIndex=None,
+                                            pupil_threshold=2.4,
+                                            running_speed_threshold=0.)
+
+#%%
 data_s = []
 for i in range(len(SESSIONS['files'])):
     data = Data(SESSIONS['files'][i], verbose=False)
-    data.build_dFoF(verbose=False)
+    data.build_dFoF(**dFoF_options, verbose=False)
     data_s.append(data)
-
-#%%
-fig = plot_average_visually_evoked_activity_all(data_s,
-                                                dataIndex = None, 
+#%% some individuals 
+for i in range(5):
+    fig = plot_average_visually_evoked_activity(data_s,
+                                                dataIndex = i, 
                                                 roiIndex=None,
                                                 pupil_threshold=2.4,
                                                 running_speed_threshold=0.5)
+    
+################### Plot average activity for all protocols all sessions ############################
+#%% average of all
+fig = plot_average_visually_evoked_activity(data_s,
+                                            dataIndex = None, 
+                                            roiIndex=None,
+                                            pupil_threshold=2.4,
+                                            running_speed_threshold=0.5)

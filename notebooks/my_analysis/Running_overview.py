@@ -24,6 +24,7 @@ from physion.analysis.process_NWB import EpisodeData
 from physion.dataviz.raw import plot as plot_raw
 
 
+
 running_speed_threshold = 0.5  #cm/s
 
 
@@ -47,6 +48,29 @@ for i in range(len(SESSIONS['files'])):
     ax[i].set_xlabel('Time (ms)', c='k')
     ax[i].set_ylabel('Running speed (cm/s)', c='k')
     ax[i].set_facecolor('white')
+
+#%% histogram 
+#for i in range(len(SESSIONS['files'])):
+
+data = Data(SESSIONS['files'][13], verbose=False)
+speed = data.nwbfile.acquisition['Running-Speed'].data[:]
+plt.hist(speed,bins=10, range = [0,1])
+
+
+#%%
+speeds = []
+
+for f in SESSIONS['files']:
+    data = Data(f, verbose=False)
+    speeds.append(data.nwbfile.acquisition['Running-Speed'].data[:])
+
+speeds = np.concatenate(speeds)
+
+plt.hist(speeds, bins=30, range = [0,1])
+plt.xlabel("Running speed")
+plt.ylabel("Count")
+plt.title("Running-speed histogram (all sessions pooled)")
+plt.show()
 
 
 #%% [markdown]
