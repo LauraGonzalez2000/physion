@@ -406,6 +406,28 @@ def get_episodes(SESSIONS, dFoF_options, protocol, verbose=True):
         
     return episodes_
 
+def plot_trace_vdFoF(fig, ax, episodes, roi_n):
+    ax.plot(episodes.t, episodes.dFoF[:,roi_n,:].mean(axis=0))
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel('dFoF')
+    x = np.array([0, episodes.time_duration[0]])
+    ax.fill_between(x, y1 = 3,color='grey',alpha=0.25)
+
+    ax.fill_between(np.array([0-episodes.time_duration[0]/5, 0]), y1 = 3,color='orange',alpha=0.25)
+    ax.fill_between(np.array([episodes.time_duration[0]-episodes.time_duration[0]/5, episodes.time_duration[0]]), y1 = 3,color='orange',alpha=0.25)
+
+    print("range pre : [",int(1000-episodes.time_duration[0]*1000/5), ";", 1000, "]")
+    print("range post : [",int(1000 + episodes.time_duration[0]*1000-episodes.time_duration[0]*1000/5), ";", int(1000+episodes.time_duration[0]*1000), "]")
+
+    mean_ini = episodes.dFoF[:, roi_n, int(1000-episodes.time_duration[0]*1000/5): 1000].mean(axis=0).mean(axis=0)
+    mean_final = episodes.dFoF[:, roi_n, int(1000 + episodes.time_duration[0]*1000-episodes.time_duration[0]*1000/5): int(1000+episodes.time_duration[0]*1000)].mean(axis=0).mean(axis=0)
+    diff = mean_final - mean_ini
+
+    print("mean pre : ", mean_ini)
+    print("mean post : ",mean_final)
+    print("post - pre :", diff)
+
+    return fig, ax
 ###################################################################################################################
 #%% Load Data
 
@@ -443,28 +465,7 @@ episodes = EpisodeData(data,
 
 #%%
 
-def plot_trace_vdFoF(fig, ax, episodes, roi_n):
-    ax.plot(episodes.t, episodes.dFoF[:,roi_n,:].mean(axis=0))
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel('dFoF')
-    x = np.array([0, episodes.time_duration[0]])
-    ax.fill_between(x, y1 = 3,color='grey',alpha=0.25)
 
-    ax.fill_between(np.array([0-episodes.time_duration[0]/5, 0]), y1 = 3,color='orange',alpha=0.25)
-    ax.fill_between(np.array([episodes.time_duration[0]-episodes.time_duration[0]/5, episodes.time_duration[0]]), y1 = 3,color='orange',alpha=0.25)
-
-    print("range pre : [",int(1000-episodes.time_duration[0]*1000/5), ";", 1000, "]")
-    print("range post : [",int(1000 + episodes.time_duration[0]*1000-episodes.time_duration[0]*1000/5), ";", int(1000+episodes.time_duration[0]*1000), "]")
-
-    mean_ini = episodes.dFoF[:, roi_n, int(1000-episodes.time_duration[0]*1000/5): 1000].mean(axis=0).mean(axis=0)
-    mean_final = episodes.dFoF[:, roi_n, int(1000 + episodes.time_duration[0]*1000-episodes.time_duration[0]*1000/5): int(1000+episodes.time_duration[0]*1000)].mean(axis=0).mean(axis=0)
-    diff = mean_final - mean_ini
-
-    print("mean pre : ", mean_ini)
-    print("mean post : ",mean_final)
-    print("post - pre :", diff)
-
-    return fig, ax
 
 ###############################
 #%%
@@ -541,7 +542,9 @@ print(f"average for active episodes  : {np.nanmean(diffs_act):.2f}" )
 print(f"average for resting episodes : {np.nanmean(diffs_rest):.2f}")
 
 ######################################################################
-#%%
+#%% #####################################
+#########################################
+#########################################
 protocol = "Natural-Images-4-repeats"
 episodes = EpisodeData(data, 
                        quantities=['dFoF', 'Pupil', 'Running-Speed'],
@@ -561,10 +564,10 @@ plots_dFoF(all_diffs_act, all_diffs_rest, variations_act, variations_rest)
 
 #%%
 #####################################################################################################
-protocols = [p for p in data.protocols if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
+#protocols = [p for p in data.protocols if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
 
-for p in protocols: 
-    print(protocol)
-    episodes_ = get_episodes(SESSIONS, dFoF_options, p, verbose=False)
-    all_diffs_act, all_diffs_rest, variations_act, variations_rest = get_vals(episodes_)
-    plots_dFoF(all_diffs_act, all_diffs_rest, variations_act, variations_rest)
+#for p in protocols: 
+#    print(protocol)
+#    episodes_ = get_episodes(SESSIONS, dFoF_options, p, verbose=False)
+#    all_diffs_act, all_diffs_rest, variations_act, variations_rest = get_vals(episodes_)
+#    plots_dFoF(all_diffs_act, all_diffs_rest, variations_act, variations_rest)

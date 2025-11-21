@@ -338,9 +338,6 @@ def plot_dFoF_per_protocol2(data_s,
     
     return fig, AX
 
-
-
-
 #%% [markdown]
 # ### Load data
 # %%

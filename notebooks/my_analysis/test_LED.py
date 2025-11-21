@@ -10,20 +10,44 @@ import matplotlib.pylab as plt
 
 
 #%%
+tstop = 0.5
+T = 30e-3          # period (seconds)
+fs = 10e3       # sampling frequency
+dt = 1/fs
 
-T = 4        # total duration (seconds)
-fs = 1000      # sampling frequency (Hz)
-t = np.linspace(0, T, int(T * fs), endpoint=False)
+t = np.arange(int(tstop/dt))*dt
 
-f = 5          # signal frequency (Hz)
+x = np.arange(len(t))
 
+nT = int(T/dt)
 
-A = np.zeros_like(t)
+cond = x % (3*nT) < nT
 
-cond = np.sin(2 * np.pi * f * t) > 0.5
-
+A = np.zeros_like(x)
 A[cond] = 1
 
+plt.plot(t, A)
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.show()
+
+# %%
+tstop = 0.5
+T = 30e-3          # period (seconds)
+fs = 10e3       # sampling frequency
+dt = 1/fs
+
+t = np.arange(int(tstop/dt))*dt
+
+x = np.arange(len(t))
+
+nT = int(T/dt)
+
+cond = x % (2*nT) < nT
+
+A = np.zeros_like(x)
+A[cond] = 1
 
 plt.plot(t, A)
 plt.xlabel("Time (s)")
