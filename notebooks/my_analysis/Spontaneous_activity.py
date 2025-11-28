@@ -150,7 +150,7 @@ protocol = "grey-10min"
 episodes = EpisodeData(data, 
                        quantities=['dFoF', 'Pupil', 'Running-Speed'],
                        protocol_name=protocol,
-                       prestim_duration=pre_stim, 
+                       prestim_duration=0, 
                        verbose=False)
 
 dFoF = episodes.dFoF[0]   #(#ROIs, timevalues)
@@ -163,7 +163,7 @@ nROIs, T = dFoF.shape
 betas = np.zeros((nROIs, 2))   # store β0 and β1 for each ROI
 dFoF_pred = np.zeros_like(dFoF) #(#ROIs, timevalues)
 
-# TRAIN MODEL  - ADD crossvalidation
+# TRAIN MODEL  - ADD crossvalidation not so necessary
 for i in range(nROIs):
     y = dFoF[i]  # ROI i trace
     model = LinearRegression()
@@ -188,45 +188,8 @@ plt.tight_layout
 ##################### TEST this model for visual stimulation ##################
 ###############################################################################
 
-def predicted_trace(x, b, m) :
-    y = b + x*m
-    return y 
-
-protocol = "static-patch"
-episodes = EpisodeData(data, 
-                       quantities=['dFoF', 'Pupil', 'Running-Speed'],
-                       protocol_name=protocol,
-                       prestim_duration=pre_stim, 
-                       verbose=False)
-
-response_dFoF = episodes.dFoF  # (#trials, #ROIs, timevalues)
-response_run = episodes.running_speed # (#trials, timevalues)
-nROIs, T = episodes.dFoF[0].shape #(#ROIs, timevalues)
-
-#USE MODEL
-trial = 2
-
-X = episodes.running_speed[trial].reshape(-1, 1)
-
-y_pred_s = []
-for roi in range(nROIs):
-    b = betas[i,0]
-    m = betas[i,1]
-    y_pred = predicted_trace(X, b, m)
-    y_pred_s.append(y_pred)
-
-dFoF_diff = response_dFoF[trial] - np.squeeze(y_pred_s)
-
-plt.figure(figsize=(10,4))
-
-plt.plot(response_dFoF[trial][roi], label='raw dFoF_vis', alpha=0.6)
-plt.plot(response_run[trial], label='raw loco_vis', alpha=0.6)
-plt.plot(y_pred_s[roi], label="predicted", alpha=0.6)
-plt.plot(dFoF_diff[roi], label="dFoF_diff", alpha=0.6)
-plt.legend()
-
 #%%
-protocol = "static-patch"
+protocol = "drifting-grating"
 episodes = EpisodeData(data, 
                        quantities=['dFoF', 'Pupil', 'Running-Speed'],
                        protocol_name=protocol,
@@ -236,32 +199,29 @@ episodes = EpisodeData(data,
 ntrials, nROIs, T = episodes.dFoF.shape #(#trials, #ROIs, timevalues)
 
 dFoF = episodes.dFoF #(#trials, #ROIs, timevalues)
+loco = episodes.running_speed #(#trials, timevalues)
 
 #USE MODEL
 dFoF_pred = []
 
 for trial in range(ntrials):
-    response_dFoF = episodes.dFoF[trial] #(#ROIs, timevalues)
-    response_run = episodes.running_speed[trial] #(timevalues)
-
-    X = response_run.reshape(-1, 1)
+    X = loco[trial].reshape(-1, 1)
     temp = []
     for roi in range(nROIs):
-        b = betas[i,0]
-        m = betas[i,1]
-        y_pred = predicted_trace(X, b, m)
+        y_pred = model.predict(X)
         temp.append(y_pred)
     dFoF_pred.append(temp)
 
-dFoF_diff = response_dFoF[trial] - np.squeeze(dFoF_pred)
+dFoF_diff = dFoF[trial] - np.squeeze(dFoF_pred)
 
 #%% #Plot example trace
 #################################################################
-trial = 2
-roi = 9
+trial = 4
+roi = 10
 plt.figure(figsize=(10,4))
 plt.plot(dFoF[trial][roi], label='dFoF')
 plt.plot(dFoF_diff[trial][roi], label='dFoF diff')
 plt.plot(dFoF_pred[trial][roi], label="dFoF predicted")
+#plt.plot(loco[trial], label='raw loco_vis', alpha=0.6, color="red")
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.tight_layout

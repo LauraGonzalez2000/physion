@@ -435,14 +435,12 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
                 interval_pre=[-1.5,0],
                 interval_post=[t0, t0+1.5],
                 test='ttest',
-                sign='both'
-            )
-            roi_summary_data = ep.compute_summary_data(
-                stat_test_props=stat_test_props,
-                exclude_keys=list(ep.varied_parameters.keys()),
-                response_significance_threshold=0.05,
-                response_args=dict(roiIndex=roi_n)
-            )
+                sign='both')
+            
+            roi_summary_data = ep.compute_summary_data(stat_test_props=stat_test_props,
+                                                       exclude_keys=list(ep.varied_parameters.keys()),
+                                                       response_significance_threshold=0.05,
+                                                       response_args=dict(roiIndex=roi_n))
 
             sig_list.append(bool(roi_summary_data['significant'][0]))
             val_list.append(roi_summary_data['value'][0])
@@ -497,11 +495,10 @@ def plot_responsiveness2_per_protocol(data_s, AX,idx,p, type='means'):
         pt.annotate(AX[idx], 'Neg= %.1f %%' % (100 * final_neg),
                     (1, -0.2), ha='right', va='top', fontsize=6)
 
-    
+    print(final_pos, final_neg, final_ns)
     pt.pie(data=[final_pos, final_neg, final_ns],
         ax=AX[idx],
         COLORS=['green', 'red', 'grey'])
-    
 
     AX[idx].set_title(f'{p.replace('Natural-Images-4-repeats','natural-images')}')
     
@@ -562,18 +559,20 @@ def generate_figures_GROUP(data_s, subplots_n):
                         if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
 
     fig1, _     = plot_dFoF_per_protocol(data_s=data_s, protocols=protocols)
-
     elapsed = time.time() - start_time
     print(f"Fig 1 ok: {elapsed:.2f} seconds")
 
     fig2, AX2  = pt.figure(axes = (len(protocols),1))
     fig3, AX3  = pt.figure(axes = (len(protocols),1))
     fig4, AX4 = pt.figure(axes = (len(protocols),1))
-
+   
     for idx, p in enumerate(protocols):
         plot_responsiveness2_per_protocol(data_s, AX2, idx, p, type='ROI')
         plot_responsiveness2_per_protocol(data_s, AX3, idx, p, type='means')
         plot_barplot2_per_protocol(data_s, AX4, idx, p, subplots_n)
+
+    elapsed = time.time() - start_time
+    print(f"Fig 2-3-4 ok: {elapsed:.2f} seconds")
 
     fig1 = figure_to_array(fig1)
     fig2 = figure_to_array(fig2)
@@ -617,8 +616,8 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
 # ## YANN DATASET
 
 #%%
-'''
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs-test')
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
 
@@ -637,18 +636,16 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-'''
+
 #%% [markdown]
 # ## All individual files
 #%%
-
 #generate_figures(data_s, cell_type='NDNF_YANN', subplots_n=5, data_type = 'Yann')
-
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
+fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
 
 ##################################################################################################################################
 ##################################################################################################################################
@@ -657,7 +654,7 @@ for idx, filename in enumerate(SESSIONS['files']):
 # ## NDNF CRE BATCH 1
 
 #%%
-
+'''
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs_run')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
@@ -678,21 +675,19 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-
+'''
 #%% [markdown]
 # ## All individual files
 #%%
 
-generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
+#generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
 
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
 
-fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
+#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')
 
 ##############################################################################################################
 ##############################################################################################################
-
-# %%
