@@ -17,6 +17,65 @@ import matplotlib.pyplot as plt
 
 from physion.analysis.process_NWB import EpisodeData
 
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
+############################
+from Generate_PDF_summary_opti import plot_responsiveness2_per_protocol
+
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
+SESSIONS = scan_folder_for_NWBfiles(datafolder)
+SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
+
+dFoF_options = {
+        'roi_to_neuropil_fluo_inclusion_factor': 1.0,
+        'method_for_F0': 'sliding_percentile',
+        'sliding_window': 300.,
+        'percentile': 10.,
+        'neuropil_correction_factor': 0.8}
+
+data_s = []
+for idx, filename in enumerate(SESSIONS['files']):
+    data = Data(filename, verbose=False)
+    data.build_dFoF(**dFoF_options, verbose=False)
+    data.build_running_speed()
+    data.build_facemotion()
+    data.build_pupil_diameter()
+    data_s.append(data)
+
+#%%
+protocols = ["static-patch", "drifting-gratings", "Natural-Images-4-repeats"]
+fig, AX  = pt.figure(axes = (len(protocols),1))
+for idx, p in enumerate(protocols):
+        plot_responsiveness2_per_protocol(data_s, AX, idx, p, type='ROI')
+
+#%%
+import alluvial
+import matplotlib.pyplot as plt
+import numpy as np
+
+input_data = {'Positive': {'Positive_': 0.5, 'ns_': 0.5, 'Negative_': 0.2},
+              'Ns': {'Positive_': 0.1, 'ns_': 0.5,'Negative_': 0.4},
+              'Negative': {'Positive_': 0.3, 'ns_': 0.6, 'Negative_': 0.1}}
+
+src_ordered_labels = ["Positive", "Ns","Negative"]
+dst_ordered_labels = ["Positive_", "Ns_", "Negative_"]
+
+ax = alluvial.plot(input_data, colors = ["green", "grey", 'red'], src_ordered_labels= src_ordered_labels, dst_ordered_labels=dst_ordered_labels)
+fig = ax.get_figure()
+fig.set_size_inches(5,5)
+plt.show()
+
+
+# src_label_override=["Positive", 'Ns', 'Negative']
+
+
+
+
+
+
+#################################
 #%%
 def study_responsiveness(SESSIONS, index, protocol):
 
@@ -307,14 +366,14 @@ def responsiveness_sessions_vs_protocols(SESSIONS, protocols):
     return 0
 
 #%% MY DATA
-datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs')
-SESSIONS = scan_folder_for_NWBfiles(datafolder)
+#datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch1','NWBs')
+#SESSIONS = scan_folder_for_NWBfiles(datafolder)
 #%%
-protocols = ['static-patch', 'drifting-grating' ,'looming-stim',
-             'Natural-Images-4-repeats','moving-dots',
-             'drifting-surround','quick-spatial-mapping']
+#protocols = ['static-patch', 'drifting-grating' ,'looming-stim',
+#             'Natural-Images-4-repeats','moving-dots',
+#             'drifting-surround','quick-spatial-mapping']
 #%%
-responsiveness_sessions_vs_protocols(SESSIONS=SESSIONS, protocols=protocols)
+#responsiveness_sessions_vs_protocols(SESSIONS=SESSIONS, protocols=protocols)
 #######################################################################################################################
 #%% YANN's DATA
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')

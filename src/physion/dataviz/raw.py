@@ -313,49 +313,10 @@ def plot(data,
                                     zr[1]-zr[0], # width
                                     1,                  # height
                                     linewidth=1.5,
-                                    edgecolor='black',
+                                    edgecolor='white',#edgecolor='black',
                                     facecolor='none', 
                                     zorder=3)
             ax.add_patch(rect)
     
     return fig, ax
-'''
-def plot(data,
-         tlim=[0,100],
-         settings = {},
-         figsize=(9,6), 
-         Tbar=0., zoom_area=None,
-         ax=None):
 
-    if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
-    else:
-        fig = None
-
-    fig_fraction_full, fstart = np.sum([settings[key]['fig_fraction'] for key in settings]), 0
-
-    for key in settings:
-        settings[key]['fig_fraction_start'] = fstart
-        settings[key]['fig_fraction'] = settings[key]['fig_fraction']/fig_fraction_full
-        fstart += settings[key]['fig_fraction']
-
-    for key in settings:
-        exec('add_%s(data, tlim, ax, **settings[key])' % key)
-
-    # time scale bar
-    if Tbar==0.:
-        Tbar = np.max([int((tlim[1]-tlim[0])/30.), 1])
-
-    ax.plot([dv_tools.shifted_start(tlim), dv_tools.shifted_start(tlim)+Tbar], [1.,1.], lw=1, color='k')
-    ax.annotate((' %is' % Tbar if Tbar>=1 else  '%.1fs' % Tbar) ,
-                [dv_tools.shifted_start(tlim), 1.02], color='k')#, fontsize=9)
-
-    ax.axis('off')
-    ax.set_xlim([dv_tools.shifted_start(tlim)-0.01*(tlim[1]-tlim[0]),tlim[1]+0.01*(tlim[1]-tlim[0])])
-    ax.set_ylim([-0.05,1.05])
-
-    if zoom_area is not None:
-        ax.fill_between(zoom_area, [0,0], [1,1],  color='k', alpha=.2, lw=0)
-
-    return fig, ax
-'''

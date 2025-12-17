@@ -39,7 +39,8 @@ def plot_evoked_pattern(self,
         print('\n [!!] visual stim of episodes was not initialized  [!!]  ')
         print('    --> screen_inset display desactivated ' )
         with_screen_inset = False
-   
+    
+    vse = None
     if with_stim_inset:
         stim_inset = pt.inset(axR, [0.2,1.3,0.6,0.6])
         self.visual_stim.plot_stim_picture(np.flatnonzero(pattern_cond)[0],
@@ -64,11 +65,12 @@ def plot_evoked_pattern(self,
                          0, resp.shape[1]))
 
     pt.set_plot(axR, [], xlim=[self.t[0], self.t[-1]])
-    pt.annotate(axR, '1 ', (0,0), ha='right', va='center', size='small')
-    pt.annotate(axR, '%i ' % resp.shape[1], (0,1), ha='right', va='center', size='small')
-    pt.annotate(axR, 'ROIs', (0,0.5), ha='right', va='center', size='small', rotation=90)
+    pt.annotate(axR, '1 ', (0,0), ha='right', va='center')
+    pt.annotate(axR, '%i ' % resp.shape[1], (0,1), ha='right', va='center')
+    pt.annotate(axR, 'ROIs', (0,0.5), ha='right', va='center', rotation=90)
     pt.annotate(axR, 'n=%i trials' % np.sum(pattern_cond), (self.t[-1], resp.shape[1]),
-                xycoords='data', ha='right', size='x-small')
+                xycoords='data', ha='right')
+
 
     # raster_bar_inset = pt.inset(axR, [0.2,1.3,0.6,0.6])
     pt.bar_legend(axR, 
@@ -94,12 +96,12 @@ def plot_evoked_pattern(self,
                     sy=roi_resp.std(axis=0),ax=axT, no_set=True)
         pt.annotate(axT, 'roi#%i' % (r+1), (self.t[0], ir), xycoords='data',
                     #rotation=90, 
-                    ha='right', size='xx-small')
+                    ha='right')
         for iep in range(np.sum(pattern_cond)):
             axT.plot(self.t, ir+roi_resp[iep,:], color=pt.tab10(iep/(np.sum(pattern_cond)-1)), lw=.5)
 
     pt.annotate(axT, '1$\\Delta$F/F', (self.t[-1], 0), xycoords='data',
-                rotation=90, size='small')
+                rotation=90)
     pt.set_plot(axT, [], xlim=[self.t[0], self.t[-1]])
     pt.draw_bar_scales(axT, Xbar=Tbar, Xbar_label=str(Tbar)+'s', Ybar=1e-12)
 

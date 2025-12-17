@@ -22,6 +22,8 @@ from physion.utils import plot_tools as pt
 from mpl_toolkits.axes_grid1 import host_subplot
 import matplotlib.pyplot as plt
 
+from sklearn import model_selection
+
 running_speed_threshold = 0.5  #cm/s
 pre_stim = 1
 
@@ -47,6 +49,14 @@ data = Data(filename,
             verbose=False)
 data.build_dFoF(**dFoF_options, verbose=False)
 data.build_running_speed()
+
+
+# no shift
+data_df = physion.analysis.dataframe.NWB_to_dataframe(filename,
+                                                       add_shifted_behavior_features=False,
+                                                       behavior_shifting_range=[-0.5, 5],
+                                                       subsampling = None,
+                                                       verbose=False)
 
 #%%
 episodes = EpisodeData(data, 
@@ -116,7 +126,7 @@ lags = correlation_lags(T, T, mode='full')
 
 # zero-lag value (correct way)
 zero_lag_val = corr_norm[lags == 0][0]
-print("Normalized cross-corr at lag 0: %.4f" % zero_lag_val)
+print("Normalized cross-corr at lag 0 (Pearson): %.4f" % zero_lag_val)
 
 # peak correlation and corresponding lag (in samples)
 imax = np.argmax(np.abs(corr_norm))
@@ -160,27 +170,51 @@ y = dFoF.T              #(timevalues, #ROIs)
 X = loco.reshape(-1, 1) #(timevalues, 1)
 
 nROIs, T = dFoF.shape
-betas = np.zeros((nROIs, 2))   # store β0 and β1 for each ROI
-dFoF_pred = np.zeros_like(dFoF) #(#ROIs, timevalues)
+#betas = np.zeros((nROIs, 2))   # store β0 and β1 for each ROI
+dFoF_pred = [] #np.zeros_like((data_df.shape[1], data_df.shape[0])) #(#ROIs, timevalues)
 
 # TRAIN MODEL  - ADD crossvalidation not so necessary
-for i in range(nROIs):
-    y = dFoF[i]  # ROI i trace
-    model = LinearRegression()
-    model.fit(X, y)
-    # save model parameters
-    betas[i,0] = model.intercept_
-    betas[i,1] = model.coef_[0]
-    dFoF_pred[i] = model.predict(X) # predicted dFoF from locomotion component for ROI i
 
-dFoF_diff = dFoF - dFoF_pred # (#ROIs, timevalues) signal left, not predicted by locomotion
+bhv_keys = [k for k in data_df.keys() if (('Run' in k) or ('Gaze' in k) or ('Whisk' in k) or ('Pupil' in k))]
+diffs = []
+
+for i in range(nROIs):
+    
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(data_df[bhv_keys], data_df['dFoF-ROI%i' % i],
+                                                            test_size=0.4, random_state=0)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    
+    #y = dFoF[i]  # ROI i trace
+    #model = LinearRegression()
+    #model.fit(X, y)
+
+    # save model parameters
+    #betas[i,0] = model.intercept_
+    #betas[i,1] = model.coef_[0]
+
+    diff = y_test - model.predict(X_test)  #accuracy of prediction for ROI i
+
+    diffs.append(diff)
+
+    #take all 
+    data_df['pred_dFoF-ROI%i' % i] = model.predict(data_df[bhv_keys])
+
+    data_df['diff_dFoF-ROI%i' % i] = data_df['dFoF-ROI%i' % i] - data_df['pred_dFoF-ROI%i' % i]  #accuracy of prediction for ROI i
+
+    #dFoF_pred.append(y_pred)
+    #dFoF_pred[i] = model.predict(X_test) # predicted dFoF from behavior components for ROI i
+
+#dFoF_diff = dFoF - dFoF_pred # (#ROIs, timevalues) signal left, not predicted by locomotion
 
 #%% # Plot example trace
 ##################################################
 roi = 9
-plt.plot(dFoF[roi], label='dFoF')
-plt.plot(dFoF_diff[roi], label='dFoF diff')
-plt.plot(dFoF_pred[roi], label="dFoF predicted")
+
+plt.plot(data_df['dFoF-ROI%i' % roi], label='dFoF')
+plt.plot(data_df['diff_dFoF-ROI%i' % roi], label='dFoF diff')
+plt.plot(data_df['pred_dFoF-ROI%i' % roi], label="dFoF predicted")
+
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.tight_layout
 
@@ -205,7 +239,9 @@ loco = episodes.running_speed #(#trials, timevalues)
 dFoF_pred = []
 
 for trial in range(ntrials):
-    X = loco[trial].reshape(-1, 1)
+    #X = loco[trial].reshape(-1, 1)
+    X = data_df[bhv_keys]
+
     temp = []
     for roi in range(nROIs):
         y_pred = model.predict(X)
@@ -225,3 +261,42 @@ plt.plot(dFoF_pred[trial][roi], label="dFoF predicted")
 #plt.plot(loco[trial], label='raw loco_vis', alpha=0.6, color="red")
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.tight_layout
+
+
+
+# %% [markdown]
+# ## Adding time-shifted temporal features to improve the linear model
+
+# %%
+N = 15  # #ROIs
+fig, AX = pt.figure((1,N), ax_scale=(2.4,0.8), hspace=0.2)
+pt.annotate(AX[0], 'Regression model\n', (1,1), ha='right', color=None)
+pt.annotate(AX[0], 'with delayed features', (1,1), ha='right', color='r')
+
+for shift, color in zip([False, True], [None, 'r']):  # Regression model with or without shift
+    
+    data = physion.analysis.dataframe.NWB_to_dataframe(filename,
+                                                       add_shifted_behavior_features=shift,
+                                                       behavior_shifting_range=[-0.5, 5],
+                                                       subsampling = 4,
+                                                       verbose=False)
+    
+    bhv_keys = [k for k in data.keys() if (('Run' in k) or ('Gaze' in k) or ('Whisk' in k) or ('Pupil' in k))]
+
+    for i in range(N):
+
+        if not shift:
+            AX[i].plot(data['time'], data['dFoF-ROI%i' % i], 'g-')
+        
+        bhv_keys = [k for k in data.keys() if (('Run' in k) or ('Gaze' in k) or ('Whisk' in k) or ('Pupil' in k))]
+    
+        X_train, X_test, y_train, y_test = model_selection.train_test_split(data[bhv_keys], data['dFoF-ROI%i' % i],
+                                                            test_size=0.4, random_state=0)
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+    
+        AX[i].plot(data['time'], model.predict(data[bhv_keys]), color=color, lw=0.2 if shift else 0.5)
+        pt.annotate(AX[i], shift*'\n'+'%.1f%%' % (100*model.score(X_test, y_test)), (0,1), color=color, va='top', fontsize=6)
+
+        if shift:
+            pt.set_plot(AX[i], ['left', 'bottom'] if i==(N-1) else ['left'], ylabel='$\\Delta$F/F\n'+'ROI-%i' % i)

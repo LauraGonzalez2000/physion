@@ -121,6 +121,32 @@ def figure_to_array(fig):
             fig_arr = np.frombuffer(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
             return fig_arr
 #%%
+def calc_responsiveness(ep, nROIs):
+    session_summary = {'significant':[], 'value':[]}
+
+    for roi_n in range(nROIs):
+
+        t0 = max([0, ep.time_duration[0]-1.5])
+        stat_test_props = dict(interval_pre=[-1.5,0],                                   
+                                interval_post=[t0, t0+1.5],                                   
+                                test='ttest', 
+                                sign='both')
+        roi_summary_data = ep.compute_summary_data(stat_test_props=stat_test_props,
+                                                   #exclude_keys=['repeat'],
+                                                   exclude_keys= list(ep.varied_parameters.keys()), # we merge different stimulus properties as repetitions of the stim. type  
+                                                   response_significance_threshold=0.05,
+                                                   response_args=dict(roiIndex=roi_n))
+        session_summary['significant'].append(bool(roi_summary_data['significant'][0]))
+        session_summary['value'].append(roi_summary_data['value'][0])
+
+    resp_cond = np.array(session_summary['significant'])                  
+    pos_cond = resp_cond & ([session_summary['value'][i]>0 for i in range(len(session_summary['value']))])
+    neg_cond = resp_cond & ([session_summary['value'][i]<0 for i in range(len(session_summary['value']))])
+
+    print(f'{sum(resp_cond)} significant ROI ({np.sum(pos_cond)} positive, {np.sum(neg_cond)} negative) out of {len(session_summary['significant'])} ROIs')
+
+    resp_cond, pos_cond, neg_cond
+
 def plot_responsiveness_per_protocol(ep, nROIs, AX, idx, p):
     
     session_summary = {'significant':[], 'value':[]}
@@ -644,8 +670,21 @@ for idx, filename in enumerate(SESSIONS['files']):
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
-create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
+
+protocols = [p for p in data_s[0].protocols 
+                        if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
+
+
+#fig2, AX2  = pt.figure(axes = (len(protocols),1))
+fig1, _     = plot_dFoF_per_protocol(data_s=data_s, protocols=protocols)
+
+#for idx, p in enumerate(protocols):
+#        plot_responsiveness2_per_protocol(data_s, AX2, idx, p, type='ROI')
+
+
+#%%
+#fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+#create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
 
 ##################################################################################################################################
 ##################################################################################################################################
