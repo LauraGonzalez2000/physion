@@ -821,6 +821,7 @@ class multiprotocol(visual_stim):
                     elif key not in ['protocol_id', 'time_duration']:
                         self.experiment[key].append(None)
                 self.experiment['protocol_id'].append(IS)
+        
 
         # ---------------------------- #
         # # SHUFFLING IF NECESSARY
@@ -875,6 +876,12 @@ class multiprotocol(visual_stim):
 
     def plot_stim_picture(self, index, 
                           ax=None, label=None, vse=False):
+        print("aa\n",self.experiment['protocol_id'])
+        print(self.experiment['protocol_id'][index])
+        print(self.STIM[self.experiment['protocol_id'][index]])
+        print(getattr(self.STIM[self.experiment['protocol_id'][index]],
+                       'plot_stim_picture')(self.experiment['index'][index],
+                                            ax=ax, label=label, vse=vse))
         return getattr(self.STIM[self.experiment['protocol_id'][index]],
                        'plot_stim_picture')(self.experiment['index'][index],
                                             ax=ax, label=label, vse=vse)

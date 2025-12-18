@@ -26,10 +26,7 @@ from PIL import Image
 # %%
 dataFolder = os.path.join(os.path.expanduser('~'), 'DATA', 
                         'In_Vivo_experiments', 'NDNF-Cre-batch2', 'Processed',
-                        'intrinsic_img','2025_11_06', '13-54-58')
-
-
- 
+                        'intrinsic_img','2025_12_09', '15-27-34')
 
 # vasculature picture
 imVasc = np.array(Image.open(os.path.join(dataFolder, 'vasculature.tif')))
