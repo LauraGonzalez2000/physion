@@ -642,7 +642,7 @@ def create_group_PDF(fig1, fig2, fig3, fig4, cell_type):
 # ## YANN DATASET
 
 #%%
-
+'''
 datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-WT-Dec-2022','NWBs')
 SESSIONS = scan_folder_for_NWBfiles(datafolder)
 SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
@@ -662,7 +662,7 @@ for idx, filename in enumerate(SESSIONS['files']):
     data.build_facemotion()
     data.build_pupil_diameter()
     data_s.append(data)
-
+'''
 #%% [markdown]
 # ## All individual files
 #%%
@@ -670,7 +670,7 @@ for idx, filename in enumerate(SESSIONS['files']):
 #%% [mardown]
 # ## GROUPED ANALYSIS
 #%%
-
+'''
 protocols = [p for p in data_s[0].protocols 
                         if (p != 'grey-10min') and (p != 'black-2min') and (p != 'quick-spatial-mapping')]
 
@@ -681,7 +681,7 @@ fig1, _     = plot_dFoF_per_protocol(data_s=data_s, protocols=protocols)
 #for idx, p in enumerate(protocols):
 #        plot_responsiveness2_per_protocol(data_s, AX2, idx, p, type='ROI')
 
-
+'''
 #%%
 #fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
 #create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF_YANN')
@@ -730,3 +730,45 @@ for idx, filename in enumerate(SESSIONS['files']):
 
 ##############################################################################################################
 ##############################################################################################################
+
+
+#%% [markdown]
+# ## NDNF CRE BATCH 2
+
+#%%
+
+datafolder = os.path.join(os.path.expanduser('~'), 'DATA', 'In_Vivo_experiments','NDNF-Cre-batch2','NWBs')
+SESSIONS = scan_folder_for_NWBfiles(datafolder)
+SESSIONS['nwbfiles'] = [os.path.basename(f) for f in SESSIONS['files']]
+
+dFoF_options = {
+        'roi_to_neuropil_fluo_inclusion_factor': 1.0,
+        'method_for_F0': 'sliding_percentile',
+        'sliding_window': 300.,
+        'percentile': 10.,
+        'neuropil_correction_factor': 0.8}
+
+data_s = []
+for idx, filename in enumerate(SESSIONS['files']):
+
+    data = Data(filename, verbose=False)
+    data.build_dFoF(**dFoF_options, verbose=False)
+    data.build_running_speed()
+    data.build_facemotion()
+    data.build_pupil_diameter()
+    data_s.append(data)
+
+#%% [markdown]
+## All individual files
+
+#%%
+print(data_s[1].protocols)
+#%%
+generate_figures(data_s, cell_type='NDNF', subplots_n=5, data_type = 'Sofia')
+
+
+#%% [mardown]
+## GROUPED ANALYSIS
+#%%
+fig1, fig2, fig3, fig4 = generate_figures_GROUP(data_s, subplots_n=5)
+create_group_PDF(fig1, fig2, fig3, fig4, 'NDNF')

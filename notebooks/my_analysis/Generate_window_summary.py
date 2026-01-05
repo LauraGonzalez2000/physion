@@ -128,7 +128,7 @@ def create_PDF(dict_annotation, fig1, fig2, fig3, fig4, fig5, fig6, fig7, segmen
 ######################################################################################################
 
 #%%
-base_folder = os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch2','Processed', 'intrinsic_img', '2025_11_06')
+base_folder = os.path.join(os.path.expanduser('~'),'DATA', 'In_Vivo_experiments', 'NDNF-Cre-batch2','Processed', 'intrinsic_img', '2025_12_09')
 
 '''
 segmentation_params={'phaseMapFilterSigma': 8.,
