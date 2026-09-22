@@ -193,8 +193,7 @@ def load_TSeries_folder(self):
     
     if folder!='':
 
-        print('log8bit' in folder)
-        if ('TSeries-' in folder) or ('log8bit-' in folder) or ('lossless' in folder):
+        if ('TSeries-' in folder) or ('log8bit-' in folder) or ('lossless' in folder) or ('h5-' in folder):
             print('"%s" is a recognize as a single TSeries folder' % folder)
             folders = [folder]
         else:

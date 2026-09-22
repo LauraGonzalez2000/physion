@@ -9,6 +9,8 @@ import numpy as np
 sys.path += ['../src'] # add src code directory for physion
 import physion
 
+from physion.assembling import dataset
+
 # %%
 sheets = os.path.join(os.path.expanduser('~'), 
                       'DATA', 'physion_Demo-Datasets', 'SST-WT', 

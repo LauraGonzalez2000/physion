@@ -296,20 +296,21 @@ class EpisodeData:
         
         single-episode responses can have different shapes
         e.g. 
-            self.pupil_diameter.shape() = (Nepisodes, Ntimestamps)
+            self.pupil.shape() = (Nepisodes, Ntimestamps)
             self.dFoF.shape() = (Nepisodes, Nrois, Ntimestamps)
 
         index can be either a index, an array of indices or None (default: then all indices)
         """
-
+        if quantity is None:
+                    if len(self.quantities)>1:
+                        print('\n there are several modalities in that episode')
+                        print('     -> need to define the desired quantity, here taking: "%s"' % self.quantities[0])
+                    quantity = self.quantities[0]
+                    
         if index is None:
             index = np.arange(getattr(self, quantity).shape[1])
             
-        if quantity is None:
-            if len(self.quantities)>1:
-                print('\n there are several modalities in that episode')
-                print('     -> need to define the desired quantity, here taking: "%s"' % self.quantities[0])
-            quantity = self.quantities[0]
+        
 
         if episode_cond is None:
             # by default all True

@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 # %%
 data = pd.read_csv(os.path.join(\
-    '..', 'data', 'Gamma-Correction-Measurements.csv'))
+    'data', 'Gamma-Correction-Measurements.csv'))
 
 # %%
 
@@ -75,6 +75,6 @@ AX[2].plot(x, data['After'], 'o-', ms=2)
 pt.set_plot(AX[2], xticks=[0., 0.5, 1.],
             xlabel='screen color', ylabel='Lux \n (lumen/m2)',
             title='After Gamma Correction')
-fig.savefig('../../docs/visual_stim/gamma-correction.png')
+fig.savefig('../docs/visual_stim/gamma-correction.png')
 # %%
 

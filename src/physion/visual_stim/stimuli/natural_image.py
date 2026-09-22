@@ -10,10 +10,10 @@ from physion.visual_stim.preprocess_NI import load,\
 #######################################
 
 params = {"Image-ID":1,
-          "contrast":0.3,
+          "contrast":1,#0.3,
           "x-center":0,
           "y-center":0,
-          "radius":30
+          "radius":300 #30
 }
 
 
@@ -48,7 +48,8 @@ class stim(visual_stim):
                             in the protocol [!!]
                   """)
             print()
-            protocol['NI_FOLDER'] = os.path.join('physion', 'visual_stim', 'NI_bank')
+            #protocol['NI_FOLDER'] = os.path.join('physion', 'visual_stim', 'NI_bank')
+            protocol['NI_FOLDER'] = os.path.join(str(pathlib.Path(__file__).resolve().parents[1]), 'NI_bank') #not logical to me to print error there
 
         # initializing set of NI
         self.NIarray = get_NaturalImages_as_array(protocol['NI_FOLDER'], self.screen)

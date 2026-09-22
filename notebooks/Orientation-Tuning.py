@@ -33,7 +33,7 @@ data = physion.analysis.read_NWB.Data(filename, verbose=False)
 data.build_dFoF(neuropil_correction_factor=0.9, percentile=10., verbose=False)
 
 Episodes = physion.analysis.episodes.build.EpisodeData(data,
-                                                       quantities=['dFoF', 'running_speed'],
+                                                       quantities=['dFoF', 'running'],
                                                        protocol_name=[p for p in data.protocols if 'ff-gratings' in p][0],
                                                        verbose=False)
 

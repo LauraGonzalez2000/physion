@@ -72,7 +72,7 @@ for i, ax in enumerate(pt.flatten(AX)):
     if i<data.nROIs:
 
         cell_resp = Episodes.pre_post_statistics(stat_test_props=stat_test_props,
-                                                 response_args=dict(roiIndex=i))
+                                                 response_args=dict(index=i))
                                                     
         cond = (cell_resp['angle']==orientation) &\
                         (cell_resp['contrast']==contrast)
@@ -154,7 +154,7 @@ for angle in [0, 90]:
                 significant = np.zeros(data.nROIs, dtype=bool)
                 for i in range(data.nROIs):
                         cell_resp = Episodes.pre_post_statistics(stat_test_props=stat_test_props,
-                                                 response_args=dict(roiIndex=i))
+                                                 response_args=dict(index=i))
                         cond = (cell_resp['angle']==orientation) &\
                                         (cell_resp['contrast']==contrast)
                         significant[i] = cell_resp['significant'][cond][0]

@@ -20,7 +20,6 @@ def load(image_path):
     
     return np.rot90(np.array(img).T, k=1) # needs transpose + rotation
 
-
 def img_after_hist_normalization(img, verbose=False):
     """
     for NATURAL IMAGES:

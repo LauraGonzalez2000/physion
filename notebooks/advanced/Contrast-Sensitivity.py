@@ -36,19 +36,19 @@ data.build_dFoF(neuropil_correction_factor=0.9,
 from physion.dataviz.raw import plot
 
 settings = {\
- 'Locomotion': {'fig_fraction': 1, 'subsampling': 1, 'color': '#1f77b4'},
- 'FaceMotion': {'fig_fraction': 1, 'subsampling': 1, 'color': 'purple'},
+ 'running': {'fig_fraction': 1, 'subsampling': 1, 'color': '#1f77b4'},
+ 'facemotion': {'fig_fraction': 1, 'subsampling': 1, 'color': 'purple'},
 #  'GazeMovement': {'fig_fraction': 0.5, 'subsampling': 1, 'color': '#ff7f0e'},
- 'Pupil': {'fig_fraction': 1, 'subsampling': 1, 'color': '#d62728'},
+ 'pupil': {'fig_fraction': 1, 'subsampling': 1, 'color': '#d62728'},
  'CaImaging': {'fig_fraction': 4, 'subsampling': 1, 'subquantity': 'dFoF',
   'color': '#2ca02c',
   'roiIndices': np.random.choice(np.arange(data.nROIs), 10)},
  'CaImagingRaster': {'fig_fraction': 2, 'subsampling': 1,
   'roiIndices': 'all', 'normalization': 'per-line', 'subquantity': 'dF/F'},
- 'VisualStim': {'fig_fraction': 0.2, 'color': 'black'}}
+ 'visual_stim': {'fig_fraction': 0.2, 'color': 'black'}}
 plot(data, tlim=[100,250], 
-     settings=settings,
-     figsize=(12,8))
+     settings=settings)#,
+     #figsize=(12,8))
 
 # %%
 from physion.dataviz.imaging import show_CaImaging_FOV

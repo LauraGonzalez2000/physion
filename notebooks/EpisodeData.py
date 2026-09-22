@@ -40,13 +40,13 @@ data = Data(filename,
             verbose=False)
 
 data.build_dFoF(**dFoF_options, verbose=True)
-data.build_pupil_diameter()
-data.build_running_speed()
+data.build_pupil()
+data.build_running()
 
 # %% [markdown]
 # ### init
 # %%
-quantities = ['dFoF', 'running_speed'] #, 'pupil_diameter']
+quantities = ['dFoF', 'running'] #, 'pupil']
 protocol = "static-patch"
 ep = EpisodeData(data, 
                  quantities = quantities, 
@@ -111,11 +111,11 @@ response = ep.get_response2D(quantity="dFoF", averaging_dimension='episodes')
 plot(response, 'mean over episodes, n=%i ROIs' % response.shape[0])
 
 #3 dimensions (dFoF) - roi = 3 
-response = ep.get_response2D(quantity="dFoF", roiIndex = 3)
+response = ep.get_response2D(quantity="dFoF", index = 3)
 plot(response, 'n=%i eps' % response.shape[0])
 
 #2 dimensions (running_speed) 
-response = ep.get_response2D(quantity="running_speed")
+response = ep.get_response2D(quantity="running")
 plot(response, 'n=%i eps' % response.shape[0])
 
 
@@ -178,7 +178,7 @@ stat_test_props = dict(interval_pre=[-1.,0],
                        interval_post=[1.,2.],                                   
                        test='ttest')
 
-response_args = dict(quantity='running_speed')
+response_args = dict(quantity='running')
 
 
 summary = ep.pre_post_statistics(episode_cond = ep.find_episode_cond(),
@@ -188,7 +188,7 @@ summary = ep.pre_post_statistics(episode_cond = ep.find_episode_cond(),
 for key in summary:
     print(key, summary[key])
 
-response_args = dict(quantity='dFoF', roiIndex=9)
+response_args = dict(quantity='dFoF', index=9)
 
 summary = ep.pre_post_statistics(episode_cond = ep.find_episode_cond(),
                                  response_args = response_args,
@@ -197,12 +197,4 @@ summary = ep.pre_post_statistics(episode_cond = ep.find_episode_cond(),
 for key in summary:
     print(key, summary[key])
 
-# %% [markdown]
-# creates dictionnary stim_data and adds as keys and values everything stored in metadata. (if subprotocol it removed the "Protocol-i" from the key) <br>
-# creates self.visual_stim with build_stim and this dictionnary <br>
-# PROBLEM - CHECK WHY THE visual_stim CAN HAVE DIFFERENT VALUES THAN THE DATA <br>
-# does not return anything <br>
-#%%
-data.init_visual_stim()
-ep.init_visual_stim(ep.data)
 # %%
