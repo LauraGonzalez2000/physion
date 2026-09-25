@@ -6,7 +6,6 @@ import pynwb, time, ast
 from hdmf.data_utils import DataChunkIterator
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from physion.imaging.bruker.xml_parser import bruker_xml_parser
 from physion.imaging.suite2p.to_nwb import add_ophys_processing_from_suite2p
@@ -14,7 +13,8 @@ from physion.imaging.suite2p.to_nwb import add_ophys_processing_from_suite2p
 from physion.utils.files import get_files_with_extension, get_TSeries_folders
 from physion.utils.binary import BinaryFile
 
-from physion.assembling.tools import build_subsampling_from_freq
+from physion.assembling.tools import build_subsampling_from_freq,\
+        stringdatetime_to_date, StartTime_to_day_seconds
 from physion.utils.paths import FOLDERS, python_path
 from physion.analysis.read_NWB import Data
 
@@ -190,25 +190,6 @@ def runAddOphys(self):
 # ---- check that the timestamps match ! --------- # 
 # ------------------------------------------------ # 
 
-def stringdatetime_to_date(s):
-
-    Month, Day, Year = s.split('/')[0], s.split('/')[1], s.split('/')[2][:4]
-
-    if len(Month)==1:
-        Month = '0'+Month
-    if len(Day)==1:
-        Day = '0'+Day
-
-    return '%s_%s_%s' % (Year, Month, Day)
-
-
-def StartTime_to_day_seconds(StartTime):
-
-    Hour = int(StartTime[0:2])
-    Min = int(StartTime[3:5])
-    Seconds = float(StartTime[6:])
-    return 60*60*Hour+60*Min+Seconds
-
 def estimate_time_overlap(nwb, imaging):
     """
     """
@@ -274,10 +255,8 @@ def add_ophys(nwbfile, args,
 
     try:
         CaFn = get_files_with_extension(args.imaging, extension='.xml')[0]# get Tseries metadata
-    except BaseException as be:
-        print(be)
-        print('\n [!!]  Problem with the CA-IMAGING data in %s  [!!] ' % args.imaging)
-        raise Exception
+    except IndexError as be:
+        raise FileNotFoundError('no xml file in the CA-IMAGING folder "%s"' % args.imaging) from be
         
     xml = bruker_xml_parser(CaFn) # metadata
 

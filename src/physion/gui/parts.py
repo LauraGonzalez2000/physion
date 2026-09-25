@@ -12,11 +12,12 @@ verysmallfont.setPointSize(9)
 smallfont.setPointSize(11)
 
 def choose_root_folder(self):
-
-    try:
-        return (physion.utils.paths.FOLDERS[self.folderBox.currentText()] if self.folderBox.currentText() in physion.utils.paths.FOLDERS else os.path.join(os.path.expanduser('~'), 'DATA'))
-    except BaseException as be:
-        return os.path.join(os.path.expanduser('~'), 'DATA')
+    """ from the folder box of the window of the current tab (if any) """
+    from physion.gui.window import current_window
+    window = current_window(self)
+    if window is not None:
+        return window.choose_root_folder()
+    return os.path.join(os.path.expanduser('~'), 'DATA')
 
 
 def open_NWB(self):
@@ -40,8 +41,9 @@ def open_folder(self):
 def open_NWB_folder(self):
 
     folder = self.open_folder()
-    self.calendar()
-    self.scan_folder(folder=folder)
+    if folder=='':
+        return folder # dialog cancelled
+    self.calendar().scan_folder(folder=folder)
 
 
     return folder

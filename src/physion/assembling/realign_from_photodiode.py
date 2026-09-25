@@ -1,7 +1,7 @@
 import numpy as np
 import os, time
 from scipy.signal import argrelextrema
-from scipy.ndimage.filters import gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d
 
 def realign_from_photodiode(signal,
                             metadata,
@@ -10,7 +10,7 @@ def realign_from_photodiode(signal,
                             shift_time=0.3, # MODIFY IT HERE IN CASE NEEDED
                             debug=False, istart_debug=0, n_vis=5,
                             max_episode=-1,
-                            ignore_episodes=[],
+                            exclude_episodes=[],
                             indices_forced=[],
                             times_forced=[],
                             durations_forced=[],
@@ -40,6 +40,8 @@ def realign_from_photodiode(signal,
 
     tstart, tshift = metadata['time_start'][0]-1, 0
     metadata['time_start_realigned'] = []
+    # index (in the protocol) of each realigned episode (episodes can be excluded)
+    metadata['realigned_episode_indices'] = []
 
     if verbose:
         print('     -> smoothing photodiode signal [...]')
@@ -67,10 +69,11 @@ def realign_from_photodiode(signal,
             print('forced index %i to start at time %.1f for a duration %.1f' % (i, times_forced[iforced], durations_forced[iforced]))
             metadata['time_duration'][i] = durations_forced[iforced]
             metadata['time_start_realigned'].append(times_forced[iforced])
+            metadata['realigned_episode_indices'].append(i)
             tstart = times_forced[iforced]
             tshift = 0.5
 
-        elif i in ignore_episodes:
+        elif i in exclude_episodes:
             # we just skip this episodes:
             success = True
 
@@ -78,6 +81,7 @@ def realign_from_photodiode(signal,
             # success
             tshift = t[:-2][cond_thresh][0] - tstart - onset_shift
             metadata['time_start_realigned'].append(tstart+tshift)
+            metadata['realigned_episode_indices'].append(i)
         else:
             success = False
             # we don't do anything, we just increment the episode id
@@ -108,13 +112,15 @@ def realign_from_photodiode(signal,
 
     # transform to numpy array
     metadata['time_start_realigned'] = np.array(metadata['time_start_realigned'])
+    metadata['realigned_episode_indices'] = np.array(metadata['realigned_episode_indices'], dtype=int)
     metadata['time_stop_realigned'] = metadata['time_start_realigned']+\
-        metadata['time_duration'][:len(metadata['time_start_realigned'])]
+        np.array(metadata['time_duration'])[metadata['realigned_episode_indices']]
     
     # if the protocol is not complete, the last one might be truncated, we remove it !
-    if len(metadata['time_start_realigned'])<len(metadata['time_start']):
-        metadata['time_start_realigned'] = metadata['time_start_realigned'][:-1]
-        metadata['time_stop_realigned'] = metadata['time_stop_realigned'][:-1]
+    # (not complete = the loop stopped before the last episode, excluded episodes do not count)
+    if i<len(metadata['time_start']):
+        for key in ['time_start_realigned', 'time_stop_realigned', 'realigned_episode_indices']:
+            metadata[key] = metadata[key][:-1]
         
     if verbose:
         print('    [ok]    --> succesfully realigned')

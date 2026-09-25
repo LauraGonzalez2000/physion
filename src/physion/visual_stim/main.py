@@ -89,6 +89,22 @@ class visual_stim:
         print('[ok] visual-stimulation time course saved as "%s"' %\
                 os.path.join(folder, 'visual-stim.npy'))
 
+    def check_episode_overlap(self):
+        """
+        checks that each episode ends ("time_start"+"time_duration")
+                    before the start of the next one ("time_start")
+
+        raises an Exception listing the overlapping episodes otherwise
+        """
+        t_start = np.array(self.experiment['time_start'], dtype=float)
+        t_end = t_start+np.array(self.experiment['time_duration'], dtype=float)
+        overlaps = np.flatnonzero(t_start[1:]<t_end[:-1])
+        if len(overlaps)>0:
+            raise Exception('\n [!!] %i overlapping episodes in the visual stim. [!!] \n' %\
+                    len(overlaps)+'\n'.join(\
+                        '    - episode #%i ends at %.3fs, episode #%i starts at %.3fs' %\
+                            (i, t_end[i], i+1, t_start[i+1]) for i in overlaps))
+
     ################################
     #  ---   Gamma correction  --- #
     ################################
@@ -338,9 +354,10 @@ class visual_stim:
                             protocol['presentation-duration'])
 
                 if 'presentation-interstim-jitter' in protocol:
-                    self.experiment['interstim'].append(\
+                    # clipped to 0 to prevent overlapping episodes
+                    self.experiment['interstim'].append(max([0.,\
                         np.random.uniform(-1, 1)*protocol['presentation-interstim-jitter']+\
-                            protocol['presentation-interstim-period'])
+                            protocol['presentation-interstim-period']]))
                 else:
                     self.experiment['interstim'].append(\
                             protocol['presentation-interstim-period'])
@@ -360,6 +377,9 @@ class visual_stim:
         # we write a tstop 
         self.tstop = self.experiment['time_stop'][-1]+\
                             protocol['presentation-poststim-period']
+
+        # we check that episodes do not overlap
+        self.check_episode_overlap()
         
 
 
@@ -669,8 +689,12 @@ class multiprotocol(visual_stim):
                     np.array(self.experiment[key])[full_indices]
 
         # rebuilding experiment time course, time_start and time_stop
-        for n, isi, dur in zip(range(len(self.experiment['index'])), 
-                               np.array(self.experiment['interstim']),
+        #   interstim[n] is the delay between the end of episode n
+        #                               and the start of episode n+1
+        self.experiment['interstim'] = np.array(self.experiment['interstim'],
+                                                dtype=float)
+        for n, pid, dur in zip(range(len(self.experiment['index'])),
+                               np.array(self.experiment['protocol_id']),
                                np.array(self.experiment['time_duration'])):
 
             if n==0:
@@ -681,8 +705,20 @@ class multiprotocol(visual_stim):
             else:
 
                 if 'presentation-interstim-jitter' in protocol:
+                    # jitter of the multiprotocol overrides the one of the
+                    #   subprotocols (to avoid adding jitter twice),
+                    #   applied around the base interstim of the previous episode
+                    prev_protocol = self.STIM[self.experiment['protocol_id'][n-1]].protocol
+                    isi = prev_protocol['presentation-interstim-period']\
+                        if 'presentation-interstim-period' in prev_protocol else 0.
                     isi += np.random.uniform(-1, 1)*protocol['presentation-interstim-jitter']
-                    # adding jitter !!
+                else:
+                    # keeping the interstim of the previous episode (with subprotocol jitter)
+                    isi = self.experiment['interstim'][n-1]
+
+                # clipped to 0 to prevent overlapping episodes
+                isi = max([0., isi])
+                self.experiment['interstim'][n-1] = isi
 
                 self.experiment['time_start'].append(\
                         self.experiment['time_stop'][-1]+isi)
@@ -692,6 +728,9 @@ class multiprotocol(visual_stim):
         # we write a tstop 
         self.tstop = self.experiment['time_stop'][-1]+\
                             protocol['presentation-poststim-period']
+
+        # we check that episodes do not overlap
+        self.check_episode_overlap()
 
     ##############################################
     ##  ----  MAPPING TO CHILD PROTOCOLS --- #####

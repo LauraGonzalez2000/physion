@@ -1,6 +1,8 @@
 import time, sys
 from PyQt5 import QtWidgets
 
+from physion.gui.window import current_window
+
 # import pdb # for DEBUG
 
 Acquisition = ('acquisition' in sys.argv) or ('all' in sys.argv)
@@ -30,20 +32,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # # calendar interface
     if (not Acquisition) and (not Intrinsic):
-        from physion.gui.calendar import calendar, pick_date,\
-                reinit_calendar, pick_subject, scan_folder,\
-                pick_datafile, show_metadata 
+        def calendar(self, *args, **kwargs):
+            from physion.gui.calendar import CalendarWindow
+            return CalendarWindow(self, *args, **kwargs)
         # from physion.analysis.summary_pdf import generate_pdf, open_pdf
     else:
         from physion.gui.parts import inactivated as calendar 
 
     # # -- Data Visualization
     if (not Acquisition) and (not Intrinsic):
-        from physion.dataviz.gui import visualization, update_frame,\
-            select_visualStim, snapshot, movie
-        from physion.dataviz.plots import raw_data_plot
-        from physion.dataviz.FOV import FOV, select_ROI_FOV,\
-            next_ROI_FOV, prev_ROI_FOV, toggle_FOV, draw_image_FOV
+        def visualization(self, *args, **kwargs):
+            from physion.dataviz.gui import VisualizationWindow
+            return VisualizationWindow(self, *args, **kwargs)
+        def FOV(self, *args, **kwargs):
+            from physion.dataviz.FOV import FOVWindow
+            return FOVWindow(self, *args, **kwargs)
     else:
         from physion.gui.parts import inactivated as visualization
         from physion.gui.parts import inactivated as raw_data_plot
@@ -92,21 +95,18 @@ class MainWindow(QtWidgets.QMainWindow):
     # # -- Intrinsic Imaging -- analysis
     # # visual & somatosensory
     if (not Acquisition) and (not Intrinsic):
-        # intrinsic
-        from physion.intrinsic.analysis import gui as intrinsic
-        from physion.intrinsic.analysis import open_intrinsic_folder,\
-                moved_pixels, load_intrinsic_data, compute_phase_maps,\
-                compute_retinotopic_maps, perform_area_segmentation,\
-                update_img1, update_img2, save_intrinsic, pdf_intrinsic,\
-                reset_ROI
+        # intrinsic (retinotopic maps)
+        def intrinsic(self, **kwargs):
+            from physion.intrinsic.analysis import IntrinsicWindow
+            return IntrinsicWindow(self, **kwargs)
         # ocular dominance
-        from physion.intrinsic.ocular_dominance import analysis_gui\
-                as OD_analysis
-        from physion.intrinsic.ocular_dominance import calc_OD, save_OD
+        def OD_analysis(self, **kwargs):
+            from physion.intrinsic.ocular_dominance import ODAnalysisWindow
+            return ODAnalysisWindow(self, **kwargs)
         # somatosensory
-        from physion.intrinsic.SS_analysis import gui as SS_intrinsic
-        from physion.intrinsic.SS_analysis import load_SS_intrinsic_data,\
-                compute_SS_power_maps, save_SS_intrinsic
+        def SS_intrinsic(self, **kwargs):
+            from physion.intrinsic.SS_analysis import SSIntrinsicWindow
+            return SSIntrinsicWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as intrinsic
         from physion.gui.parts import inactivated as OD_analysis 
@@ -114,54 +114,62 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # # -- FaceMotion tracking
     if (not Acquisition) and (not Intrinsic):
-        from physion.facemotion.gui import gui as facemotion 
-        from physion.facemotion.gui import open_facemotion_data,\
-                reset_facemotion, load_last_facemotion_gui_settings,\
-                save_facemotion_data, refresh_facemotion,\
-                process_facemotion, process_grooming, add_facemotion_ROI,\
-                update_grooming_threshold
+        def facemotion(self, tab_id=2):
+            from physion.facemotion.gui import FaceMotionWindow
+            return FaceMotionWindow(self, tab_id)
     else:
         from physion.gui.parts import inactivated as facemotion 
 
     # # -- Pupil tracking
     if (not Acquisition) and (not Intrinsic):
-        from physion.pupil.gui import gui as pupil
-        from physion.pupil.gui import open_pupil_data,\
-                jump_to_frame, add_blankROI, add_reflectROI,\
-                save_pupil_data, fit_pupil, process_pupil,\
-                process_outliers_pupil,\
-                interpolate_pupil, find_outliers_pupil,\
-                reset_pupil, set_cursor_1_pupil, set_cursor_2_pupil,\
-                set_precise_time_pupil, go_to_frame_pupil, add_ROI_pupil,\
-                load_last_gui_settings_pupil, save_pupil_data
+        def pupil(self, tab_id=2):
+            from physion.pupil.gui import PupilWindow
+            return PupilWindow(self, tab_id)
     else:
         from physion.gui.parts import inactivated as pupil 
 
 
     # # -- Suite2P Preprocesssing
     if (not Acquisition) and (not Intrinsic):
-        from physion.imaging.gui import suite2p_preprocessing_UI, open_suite2p,\
-                load_TSeries_folder, run_TSeries_analysis, change_presets
+        def suite2p_preprocessing_UI(self, **kwargs):
+            from physion.imaging.gui import Suite2pWindow
+            return Suite2pWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as suite2p_preprocessing_UI
 
+    # # -- H5 Imaging - ROI extraction
+    if (not Acquisition) and (not Intrinsic):
+        def h5_imaging_UI(self, tab_id=2):
+            from physion.imaging.h5_gui import H5ImagingWindow
+            return H5ImagingWindow(self, tab_id)
+    else:
+        from physion.gui.parts import inactivated as h5_imaging_UI
+
     # # -- Spike Sorting Preprocesssing
     if (not Acquisition) and (not Intrinsic):
-        from physion.ephys.gui import spike_sorting_preprocessing_UI, open_phy,\
-                run_spike_sorting
+        def spike_sorting_preprocessing_UI(self, **kwargs):
+            from physion.ephys.gui import SpikeSortingWindow
+            return SpikeSortingWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as spike_sorting_preprocessing_UI
 
 
     # # -- Assembling
     if (not Acquisition) and (not Intrinsic):
-        from physion.assembling.gui import build_NWB_from_DataTable_UI,\
-            build_DataTable_UI, runBuildDTBL, load_NWB_folder,\
-            choose_DataTable, runBuildNWBfromDTBL, build_NWB_UI, runBuildNWB
+        def build_NWB_from_DataTable_UI(self, **kwargs):
+            from physion.assembling.gui import BuildNWBfromDataTableWindow
+            return BuildNWBfromDataTableWindow(self, **kwargs)
+        def build_DataTable_UI(self, **kwargs):
+            from physion.assembling.gui import BuildDataTableWindow
+            return BuildDataTableWindow(self, **kwargs)
+        def build_NWB_UI(self, **kwargs):
+            from physion.assembling.gui import BuildNWBWindow
+            return BuildNWBWindow(self, **kwargs)
         # from physion.assembling.add_ophys import add_imaging, loadNWBfile,\
             # loadNWBfolder, loadCafolder, runAddOphys, check_ordered
-        from physion.assembling.FOV_coordinates import gui as FOV_coords_UI,\
-                load_intrinsic_maps_FOV
+        def FOV_coords_UI(self, tab_id=2):
+            from physion.assembling.FOV_coordinates import FOVCoordinatesWindow
+            return FOVCoordinatesWindow(self, tab_id)
     else:
         from physion.gui.parts import inactivated as add_imaging
         from physion.gui.parts import inactivated as build_NWB_UI 
@@ -172,43 +180,45 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # # -- Data Analysis 
     if (not Acquisition) and (not Intrinsic):
-        from physion.analysis.trial_averaging import trial_averaging,\
-            update_protocol_TA, update_quantity_TA, select_ROI_TA,\
-            compute_episodes, refresh_TA, next_ROI_TA, prev_ROI_TA,\
-            next_and_plot_TA
+        def trial_averaging(self, *args, **kwargs):
+            from physion.analysis.trial_averaging import TrialAveragingWindow
+            return TrialAveragingWindow(self, *args, **kwargs)
     else:
         from physion.gui.parts import inactivated as trial_averaging
 
     # # -- Imaging - BOT Spatial Maps
     if (not Acquisition) and (not Intrinsic):
-        from physion.imaging.bot_spatial_maps \
-                import gui as bot_spatial_maps
-        from physion.imaging.bot_spatial_maps import run_bot_analysis
+        def bot_spatial_maps(self, **kwargs):
+            from physion.imaging.bot_spatial_maps import BOTSpatialMapsWindow
+            return BOTSpatialMapsWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as bot_spatial_maps
 
     # # -- Imaging - Red Label GUI 
     if (not Acquisition) and (not Intrinsic):
-        from physion.imaging.red_label import red_channel_labelling,\
-            load_RCL, next_roi_RCL, prev_roi_RCL, save_RCL,\
-            preprocess_RCL, switch_roi_RCL, reset_all_to_green,\
-            toggle_RCL, draw_image_RCL
+        def red_channel_labelling(self, **kwargs):
+            from physion.imaging.red_label import RedChannelLabellingWindow
+            return RedChannelLabellingWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as red_channel_labelling
 
 
     if (not Acquisition) and (not Intrinsic):
         # -- File Transfer
-        from physion.utils.transfer.gui import transfer_gui,\
-                set_source_folder, set_destination_folder,\
-                run_transfer
+        def transfer_gui(self, **kwargs):
+            from physion.utils.transfer.gui import TransferWindow
+            return TransferWindow(self, **kwargs)
         # -- Behavior to Movie Files conversion
-        from physion.behavior.convert_to_movie import cameraData_to_movie_gui,\
-                convert_cameraData_to_movie
-        from physion.utils.compression.twoP import imaging_to_movie_gui,\
-                run_imaging_to_movie
+        def cameraData_to_movie_gui(self, **kwargs):
+            from physion.behavior.convert_to_movie import CameraToMovieWindow
+            return CameraToMovieWindow(self, **kwargs)
+        def imaging_to_movie_gui(self, **kwargs):
+            from physion.utils.compression.twoP import ImagingToMovieWindow
+            return ImagingToMovieWindow(self, **kwargs)
         # -- File Deletion
-        from physion.utils.management.delete import deletion_gui, run_deletion
+        def deletion_gui(self, **kwargs):
+            from physion.utils.management.delete import DeletionWindow
+            return DeletionWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as behav_to_movie_gui
         from physion.gui.parts import inactivated as imaging_to_movie_gui
@@ -233,6 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data, self.acq, self.stim = None, None, None
         self.bridge = None # bridge to camera
         self.windows = ['' for i in range(Ntabs)] # one window name per tab_id
+        self.window_objects = [None for i in range(Ntabs)] # see physion.gui.window
         self.quit_event = None
 
         self.setWindowTitle('Physion -- Vision Physiology Software')
@@ -301,38 +312,42 @@ class MainWindow(QtWidgets.QMainWindow):
             self.data = Data(filename)
             self.visualization()
         elif folder is not None:
-            self.calendar()
-            self.scan_folder(folder=folder)
+            self.calendar().scan_folder(folder=folder)
         else:
             self.calendar()
         self.show()
 
         print(' -> GUI init took %.1fs: ' % (time.time()-tic))
    
+    def window_shortcut(self, action):
+        """
+        the keyboard shortcut is handled by the window of the current tab
+            if it is a physion.gui.window.Window implementing it ("on_"+action)
+        """
+        window = current_window(self)
+        if (window is not None) and callable(getattr(window, 'on_'+action, None)):
+            getattr(window, 'on_'+action)()
+            return True
+        return False
+
     def open(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='red_channel_labelling':
-            self.folder = self.open_folder()
-            self.load_RCL()
-        else:
-            self.open_file()
+        if self.window_shortcut('open'):
+            return
+        self.open_file()
             
     def save(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='red_channel_labelling':
-            print('save')
-            self.save_RCL()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('save'):
+            return
+        print('no shortcut')
 
     def hitting_space(self):
         """
         for now used as a debuggin tool for the UI
         """
+        if self.window_shortcut('hitting_space'):
+            return
         tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='red_channel_labelling':
-            self.switch_roi_RCL()
-        else:
+        if True:
             import os
             # ---- DEBUG interface ---- #
             # self.bot_spatial_maps()
@@ -368,53 +383,19 @@ class MainWindow(QtWidgets.QMainWindow):
             # self.intrinsic()
 
     def refresh(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='visualization':
-            tzoom = self.plot.getAxis('bottom').range
-            self.raw_data_plot(tzoom)
-        elif self.windows[tab_id] =='facemotion':
-            self.refresh_facemotion()
-        elif self.windows[tab_id] =='pupil':
-            self.jump_to_frame()
-        elif self.windows[tab_id] =='trial_averaging':
-            self.refresh_TA()
-        elif self.windows[tab_id] =='FOV':
-            self.draw_image_FOV()
-        else:
-            # print(self.tabWidget.currentWidget())
+        if not self.window_shortcut('refresh'):
             print('no shortcut')
 
     def process(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='red_channel_labelling':
-            self.prev_roi_RCL()
-        elif self.windows[tab_id] =='pupil':
-            self.process_pupil()
-        elif self.windows[tab_id] =='trial_averaging':
-            self.prev_ROI_TA()
-        elif self.windows[tab_id] =='FOV':
-            self.prev_ROI_FOV()
-        else:
+        if not self.window_shortcut('process'):
             print('no shortcut')
 
     def toggle(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='FOV':
-            self.toggle_FOV()
-        elif self.windows[tab_id] =='red_channel_labelling':
-            self.toggle_RCL()
-        else:
+        if not self.window_shortcut('toggle'):
             print('no shortcut')
 
     def next(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='red_channel_labelling':
-            self.next_roi_RCL()
-        elif self.windows[tab_id] =='trial_averaging':
-            self.next_ROI_TA()
-        elif self.windows[tab_id] =='FOV':
-            self.next_ROI_FOV()
-        else:
+        if not self.window_shortcut('next'):
             print('no shortcut')
 
     def next_ROI(self):
@@ -438,47 +419,32 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def press1(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='pupil':
-            self.set_cursor_1_pupil()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('press1'):
+            return
+        print('no shortcut')
 
     def press2(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='pupil':
-            self.set_cursor_2_pupil()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('press2'):
+            return
+        print('no shortcut')
 
     def press3(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='pupil':
-            self.process_outliers_pupil()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('press3'):
+            return
+        print('no shortcut')
 
     def press4(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='pupil':
-            self.interpolate_pupil()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('press4'):
+            return
+        print('no shortcut')
 
     def press5(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='pupil':
-            self.find_outliers_pupil()
-        else:
-            print('no shortcut')
+        if self.window_shortcut('press5'):
+            return
+        print('no shortcut')
 
     def fit(self):
-        tab_id = self.tabWidget.currentIndex()
-        if self.windows[tab_id] =='trial_averaging':
-            self.next_and_plot_TA()
-        elif self.windows[tab_id] =='pupil':
-            self.fit_pupil()
-        else:
+        if not self.window_shortcut('fit'):
             print('no shortcut')
 
     def home(self):

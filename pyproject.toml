@@ -32,12 +32,32 @@ dependencies = [
     "ffmpeg-python",
     "pyqt5",
     "openpyxl",
+    # imported directly (previously only installed through other packages)
+    "h5py",
+    "hdmf",
+    "pillow",
+    "python-dateutil",
+    "requests",
+]
+
+[project.optional-dependencies]
+# electrophysiology: spike sorting, LFP, "Ephys-Analysis" and "CSD-Analysis" notebooks
+ephys = [
     "open-ephys-python-tools>=1.0",
     "spikeinterface[full]",
     "probeinterface",
     "elephant==1.0.0",
     "neo==0.14.4",
 ]
+# acquisition setups (camera SDKs: see docs/install/acquisition.md)
+acquisition = [
+    "nidaqmx",
+]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]  # the other scripts of tests/ are not collected
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -45,6 +65,8 @@ where = ["src"]
 "physion.acquisition.protocols" = ["*.json"]
 "physion.acquisition.configs" = ["*.json"]
 "physion.acquisition" = ["DataTable.xlsx"]
+"physion.utils" = ["*.mplstyle"]
+"physion.visual_stim" = ["NI_bank/*.jpg"]
 
 [project.urls]
 "Homepage" = "https://github.com/yzerlaut/physion"

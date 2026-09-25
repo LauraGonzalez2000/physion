@@ -62,7 +62,7 @@ def read_spreadsheet(filename,
                 protocols[-1] = metadata['protocol']
                 FOVs[-1] = metadata['FOV']
 
-            except BaseException as be:
+            except (OSError, ValueError, KeyError) as be:
 
                 if verbose:
                     print(be)
@@ -79,7 +79,7 @@ def read_spreadsheet(filename,
                 protocols[-1] = analysis['protocol'][i]
                 FOVs[-1] = dataset['FOV'][i]
 
-            except BaseException as be:
+            except (KeyError, IndexError) as be:
 
                 if verbose:
                     print(be)
@@ -179,6 +179,7 @@ if __name__=='__main__':
                 for time in [t for t in os.listdir(os.path.join(folder,day)) if (len(t.split('-'))==3)]:
                     days.append(day)
                     times.append(time)
+                    params = load_metadata_file(os.path.join(folder, day, time))
                     if params is not None:
                         protocols.append(params['protocol'])
                         mice.append(params['subject_ID'])

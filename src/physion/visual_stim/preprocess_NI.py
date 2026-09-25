@@ -3,7 +3,6 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
 import itertools, string, sys, pathlib
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 try:
     from skimage import color, io
@@ -53,7 +52,7 @@ def adapt_to_screen_resolution(img, new_screen, verbose=False):
 if __name__=='__main__':
 
     from datavyz import ge
-    NI_directory = os.path.join(str(pathlib.Path(__file__).resolve().parents[1]), 'NI_bank')
+    NI_directory = os.path.join(str(pathlib.Path(__file__).resolve().parent), 'NI_bank')
     
     image_number = 0
     filename = os.listdir(NI_directory)[image_number]
