@@ -171,14 +171,14 @@ for angle in [0, 90]:
                 Responses.append(Response)
 
         # saving data
-        np.save(os.path.join(tempfile.tempdir, 
+        np.save(os.path.join(tempfile.gettempdir(), 
                         'Deconvolved_WT_angle-%.1f.npy' % angle),
                 Responses)
 
 # %%
 
 # loading data
-Responses = np.load(os.path.join(tempfile.tempdir, 
+Responses = np.load(os.path.join(tempfile.gettempdir(), 
                                      'Deconvolved_WT_angle-0.0.npy'), 
                   allow_pickle=True)
 

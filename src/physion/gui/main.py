@@ -132,7 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # # -- Suite2P Preprocesssing
     if (not Acquisition) and (not Intrinsic):
         def suite2p_preprocessing_UI(self, **kwargs):
-            from physion.imaging.gui import Suite2pWindow
+            from physion.imaging.suite2p_gui import Suite2pWindow
             return Suite2pWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as suite2p_preprocessing_UI
@@ -148,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # # -- Spike Sorting Preprocesssing
     if (not Acquisition) and (not Intrinsic):
         def spike_sorting_preprocessing_UI(self, **kwargs):
-            from physion.ephys.gui import SpikeSortingWindow
+            from physion.ephys.spike_sorting_gui import SpikeSortingWindow
             return SpikeSortingWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as spike_sorting_preprocessing_UI
@@ -170,18 +170,22 @@ class MainWindow(QtWidgets.QMainWindow):
         def FOV_coords_UI(self, tab_id=2):
             from physion.assembling.FOV_coordinates import FOVCoordinatesWindow
             return FOVCoordinatesWindow(self, tab_id)
+        def add_channel_location_UI(self, **kwargs):
+            from physion.ephys.location_gui import ChannelLocationWindow
+            return ChannelLocationWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as add_imaging
         from physion.gui.parts import inactivated as build_NWB_UI 
         from physion.gui.parts import inactivated as build_DataTable_UI
         from physion.gui.parts import inactivated as build_NWB_from_DataTable_UI
         from physion.gui.parts import inactivated as FOV_coords_UI
+        from physion.gui.parts import inactivated as add_channel_location_UI
 
 
     # # -- Data Analysis 
     if (not Acquisition) and (not Intrinsic):
         def trial_averaging(self, *args, **kwargs):
-            from physion.analysis.trial_averaging import TrialAveragingWindow
+            from physion.dataviz.episodes.gui import TrialAveragingWindow
             return TrialAveragingWindow(self, *args, **kwargs)
     else:
         from physion.gui.parts import inactivated as trial_averaging

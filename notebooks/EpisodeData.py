@@ -8,7 +8,7 @@
 #find_episode_cond <br>
 #stat_test_for_evoked_responses <br>
 #compute_summary_data <br>
-#init_visual_stim <br>
+#build_visual_stim <br>
 
 
 # %%
@@ -114,7 +114,7 @@ plot(response, 'mean over episodes, n=%i ROIs' % response.shape[0])
 response = ep.get_response2D(quantity="dFoF", index = 3)
 plot(response, 'n=%i eps' % response.shape[0])
 
-#2 dimensions (running_speed) 
+#2 dimensions (running) 
 response = ep.get_response2D(quantity="running")
 plot(response, 'n=%i eps' % response.shape[0])
 
@@ -197,4 +197,11 @@ summary = ep.pre_post_statistics(episode_cond = ep.find_episode_cond(),
 for key in summary:
     print(key, summary[key])
 
+# %% [markdown]
+# creates dictionnary stim_data and adds as keys and values everything stored in metadata. (if subprotocol it removed the "Protocol-i" from the key) <br>
+# creates self.visual_stim with build_stim and this dictionnary <br>
+# PROBLEM - CHECK WHY THE visual_stim CAN HAVE DIFFERENT VALUES THAN THE DATA <br>
+# does not return anything <br>
+#%%
+data.build_visual_stim()
 # %%

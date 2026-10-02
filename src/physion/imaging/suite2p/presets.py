@@ -40,7 +40,6 @@ presets = {\
         },
         "hsyn-pyramidal":{\
                            # functional detection
-                           "sparse_mode":False,
                            "sig_baseline":10.0,
                            'smooth_sigma':1.15,
                            'smooth_sigma_time':0,
@@ -53,7 +52,7 @@ presets = {\
                            'spatial_taper':40,
                            'spatscale_pix':12,
                            'subpixel':10,
-                           'treshold_scaling':0.0,
+                           'threshold_scaling':0.0,
                            "high_pass":300},\
                            # (ROI diameter from the "cell size" box of the UI)
         "hsyn-Ventricle-inj":{\
@@ -97,6 +96,22 @@ presets = {\
                        "flow_threshold": 0.1,
                        "cellprob_threshold": 0.8},
 
+        "hsyn-Cibele":{\
+                    # functional detection
+                    "sig_baseline":10.0,
+                    'smooth_sigma':1.15,
+                    'smooth_sigma_time':0,
+                    'snr_thresh':1.2,
+                    'soma_crop':True,
+                    'sparse_mode':False,
+                    'spatial_hp_cp':0,
+                    'spatial_hp_detect':25,
+                    'spatial_hp_reg':42,
+                    'spatial_taper':40,
+                    'spatscale_pix':12,
+                    'subpixel':10,
+                    'threshold_scaling':0.0,
+                    "high_pass":300},\
         "Test Pyramidal 3":{\
                     "frames_include":10,
                     "registration":{
@@ -109,8 +124,7 @@ presets = {\
                         "allow_overlap":True,
                         "max_overlap":0.5,
                         "connected":True,
-                        "threshold_scalling":0.5,
-
+                        "threshold_scaling":0.5,
                         "algorithm": "sourcery",
                         "sourcery_settings":{\
                             "threshold_scalling":0.5,
