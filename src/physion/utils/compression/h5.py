@@ -97,10 +97,34 @@ def tiffs_to_h5(
     return out_path
 
 
+def get_xml_file(TS_folder):
+    xml_files = get_files_with_extension(TS_folder, extension='.xml')
+    if len(xml_files)==0:
+        raise FileNotFoundError('no xml file in "%s"' % TS_folder)
+    return xml_files[0]
+
+
+class MissingTiffsError(Exception):
+    """ some tiffs of the Bruker xml are not in the "TSeries-" folder """
+    pass
+
+
+def check_tiffs_before_h5(TS_folder):
+    """ raises MissingTiffsError if tiffs of the xml are missing """
+    missing, _ = check_tiff_coverage(TS_folder,
+                                     build_conversion_plan(TS_folder))
+    if len(missing)>0:
+        raise MissingTiffsError(
+            '%i tiffs of the xml are missing in "%s" (e.g. %s)' %\
+                (len(missing), TS_folder, sorted(missing)[0]))
+
+
 def convert_to_h5(TS_folder):
 
-    xml_file = get_files_with_extension(TS_folder, 
-                                        extension='.xml')[0]
+    # nothing is written if tiffs are missing
+    check_tiffs_before_h5(TS_folder)
+
+    xml_file = get_xml_file(TS_folder)
     xml = bruker_xml_parser(xml_file)
 
     if not os.path.isdir(compressed_folder(TS_folder, 'h5')):
@@ -150,7 +174,7 @@ def build_conversion_plan(TS_folder, h5_folder=None):
     """
     if h5_folder is None:
         h5_folder = compressed_folder(TS_folder, 'h5')
-    xml_file = get_files_with_extension(TS_folder, extension='.xml')[0]
+    xml_file = get_xml_file(TS_folder)
     xml = bruker_xml_parser(xml_file)
 
     plan = []
@@ -230,6 +254,14 @@ def remove_readonly(func, path, _):
     """ on network shares, some files can be read-only """
     os.chmod(path, stat.S_IWRITE)
     func(path)
+
+
+def remove_failed_h5_folder(TS_folder):
+    """ after a conversion that failed partway (the raw data is still there) """
+    h5_folder = compressed_folder(TS_folder, 'h5')
+    if os.path.isdir(h5_folder):
+        shutil.rmtree(h5_folder, onerror=remove_readonly)
+        print('     [!!] partial "%s" removed' % h5_folder)
 
 
 def remove_TSeries_if_converted(TS_folder):

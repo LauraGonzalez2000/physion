@@ -145,6 +145,11 @@ class MainWindow(QtWidgets.QMainWindow):
     else:
         from physion.gui.parts import inactivated as h5_imaging_UI
 
+    # # -- Matching imaging FOV across days (acquisition, available in all modes)
+    def matching_FOV_UI(self, tab_id=1):
+        from physion.imaging.matching_FOV_gui import MatchingFOVWindow
+        return MatchingFOVWindow(self, tab_id)
+
     # # -- Spike Sorting Preprocesssing
     if (not Acquisition) and (not Intrinsic):
         def spike_sorting_preprocessing_UI(self, **kwargs):
@@ -216,6 +221,9 @@ class MainWindow(QtWidgets.QMainWindow):
         def cameraData_to_movie_gui(self, **kwargs):
             from physion.behavior.convert_to_movie import CameraToMovieWindow
             return CameraToMovieWindow(self, **kwargs)
+        def imaging_to_h5_gui(self, **kwargs):
+            from physion.utils.compression.twoP import ImagingToH5Window
+            return ImagingToH5Window(self, **kwargs)
         def imaging_to_movie_gui(self, **kwargs):
             from physion.utils.compression.twoP import ImagingToMovieWindow
             return ImagingToMovieWindow(self, **kwargs)
@@ -225,6 +233,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return DeletionWindow(self, **kwargs)
     else:
         from physion.gui.parts import inactivated as behav_to_movie_gui
+        from physion.gui.parts import inactivated as imaging_to_h5_gui
         from physion.gui.parts import inactivated as imaging_to_movie_gui
         from physion.gui.parts import inactivated as transfer_gui 
         from physion.gui.parts import inactivated as cameraData_to_movie_gui

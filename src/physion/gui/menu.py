@@ -30,6 +30,8 @@ def build_menu(self):
                                   self.intrinsic_acq)
     self.experimentMenu.addAction('Whisker Mapping',
                                   self.SS_intrinsic_acq)
+    self.experimentMenu.addAction('Finding Matching FOV',
+                                  self.matching_FOV_UI)
     self.experimentMenu.addAction('Face Camera',
                                   self.in_progress)
     self.experimentMenu.addAction('Webcam',
@@ -103,6 +105,8 @@ def build_menu(self):
                               self.transfer_gui)
     self.otherMenu.addAction('&Convert Camera to Movies',
                               self.cameraData_to_movie_gui)
+    self.otherMenu.addAction('&Convert 2P-Imaging to H5',
+                              self.imaging_to_h5_gui)
     self.otherMenu.addAction('&Convert 2P-Imaging to Movies',
                               self.imaging_to_movie_gui)
     #self.otherMenu.addAction('&Delete Data',
