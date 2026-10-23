@@ -240,6 +240,7 @@ def get_FOV_image(data, key):
             getattr(data.nwbfile.processing['ophys'],
                   'data_interfaces')['Backgrounds_0'],
                   'images')[key][:]
+    #img = np.rot90(img, 2)
 
     extent=(0, img.shape[1], 
             0, img.shape[0])

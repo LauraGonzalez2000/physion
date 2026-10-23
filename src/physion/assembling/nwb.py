@@ -949,6 +949,9 @@ if __name__=='__main__':
 
     if '.xlsx' in args.datafolder:
 
+        print("args datafolder", args.datafolder)
+
+
         filename, directory = args.datafolder, os.path.dirname(args.datafolder)
         dataset, subjects, _ = read_spreadsheet(filename)
         if args.destination_folder=='':
@@ -963,6 +966,8 @@ if __name__=='__main__':
             Subject = subjects[\
                             subjects['subject']==dataset['subject'].values[i]\
                                     ].to_dict('records')[0]
+            print(dataset['datafolder'][i])
+            
 
             # resetting the datafodler
             args.datafolder = dataset['datafolder'][i]

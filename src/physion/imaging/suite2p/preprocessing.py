@@ -245,10 +245,17 @@ def run_preprocessing(args):
 
     build_suite2p_options(args.CaImaging_folder, 
                           presets[args.setting_key])
+    try : 
+        cmd = '%s -m suite2p --db "%s" --ops "%s" &' % (python_path_suite2p_env,
+                                                     os.path.join(args.CaImaging_folder,'db.npy'),
+                                                     os.path.join(args.CaImaging_folder,'ops.npy'))
+        
+    except: 
+        cmd = '%s -m suite2p --db "%s" --settings "%s" &' % (python_path_suite2p_env,
+                                                             os.path.join(args.CaImaging_folder,'db.npy'),
+                                                             os.path.join(args.CaImaging_folder,'settings.npy'))
+        
 
-    cmd = '%s -m suite2p --db "%s" --ops "%s" &' % (python_path_suite2p_env,
-                                     os.path.join(args.CaImaging_folder,'db.npy'),
-                                     os.path.join(args.CaImaging_folder,'ops.npy'))
 
     print('running "%s" \n ' % cmd)
     p = subprocess.Popen(cmd,

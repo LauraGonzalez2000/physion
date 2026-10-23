@@ -5,6 +5,7 @@ add the version manually (get it with: "python -m suite2p --version")
 """
 
 def default_ops():
+    print("this one default ops")
     """ 
     default options to run pipeline 
 
@@ -167,10 +168,14 @@ def default_ops():
         "prctile_baseline": 8.,  # optional (whether to use a percentile baseline)
         "neucoeff": 0.7,  # neuropil coefficient
         "version" : 'v0.9.3.dev528+gc88e1ba.d20240604',
+        "cellpose_settings": {"img": "max_proj / meanImg"},
         }
 
 
 def default_settings():
+    print("this one default settings")
+
+    
     """ from suite2p >=v1.0, 
     default settings to run pipeline """
     return {

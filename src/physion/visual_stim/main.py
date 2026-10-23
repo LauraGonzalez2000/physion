@@ -540,6 +540,7 @@ class visual_stim:
 
         """
         """
+
         tcenter = .5*(self.experiment['time_stop'][episode]-\
                       self.experiment['time_start'][episode])
 
