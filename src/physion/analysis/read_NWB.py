@@ -20,6 +20,8 @@ MODALITIES = [\
         'running',
         'opto',
         'rawFluo',
+        'correctedFluo',
+        'Zscore_correctedFluo',
         'neuropil',
         'dFoF',
         # 'spikes',
@@ -225,12 +227,21 @@ class Data(VisualStimMixin, LocomotionMixin, FaceCameraMixin, OptoMixin, OphysMi
 
     def build_Zscore(self, quantity):
         # build Zscore (quantity-mean)/std for a given modality
+        
         if not hasattr(self, quantity):
             print(' [!!] building %s with default options [!!]' % quantity)
             getattr(self, 'build_%s' % quantity)()
+
+        # it is possible to remove neuropil (with a certain factor)
+        #my_quantity = getattr(self, quantity)
+        #neuropil has to be defined
+        #my_quantity = my_quantity - neuropil_correction_factor*self.neuropil
+
         setattr(self, 'Zscore_%s' % quantity,
                 zscore(getattr(self, quantity), axis=-1))
-
+        #keep same sampling as quantity without Zscore
+        setattr(self, 't_Zscore_%s' % quantity, 
+                getattr(self, 't_%s' % quantity))
 
     def available_modalities(self,
                              verbose=False):

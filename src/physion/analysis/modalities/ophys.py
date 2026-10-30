@@ -94,7 +94,6 @@ class OphysMixin:
         self.planeID = planeID[self.valid_roiIndices]
         self.redcell= redcell[self.valid_roiIndices]
 
-
     def set_valid_roiIndices(self,
                              roi_to_neuropil_fluo_inclusion_factor=ROI_TO_NEUROPIL_INCLUSION_FACTOR,
                              roi_to_neuropil_fluo_inclusion_factor_metric=ROI_TO_NEUROPIL_INCLUSION_FACTOR_METRIC,
@@ -162,6 +161,8 @@ class OphysMixin:
             else:
                 raise ValueError('roi_to_neuropil_fluo_inclusion_factor_metric must be'+\
                                  ' either "mean" or "std"')
+
+            print("value neuropil inclusion factor", roi_to_neuropil_fluo_inclusion_factor )
             apply_criterion(fluo>roi_to_neuropil_fluo_inclusion_factor*neuropil,
                             'fluo (%s) > %.2f x neuropil' % (roi_to_neuropil_fluo_inclusion_factor_metric,
                                                              roi_to_neuropil_fluo_inclusion_factor))
@@ -217,7 +218,6 @@ class OphysMixin:
             self.rawFluo = self.rawFluo2
             # then we update the timestamps
             self.t_rawFluo= specific_time_sampling
-
 
     def build_neuropil(self,
                        specific_time_sampling=None,
@@ -284,6 +284,10 @@ class OphysMixin:
         else:
             self.neuropil_correction_factor = factor
             self.correctedFluo = self.rawFluo-factor[:, np.newaxis]*self.neuropil
+        
+        #keep same sampling as rawFluo
+        setattr(self, 't_correctedFluo', 
+                getattr(self, 't_rawFluo'))
 
     def build_F0(self,
                  method=METHOD,
