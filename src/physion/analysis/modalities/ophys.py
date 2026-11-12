@@ -6,10 +6,9 @@ methods of physion.analysis.read_NWB.Data (see the Data class)
 import time
 import numpy as np
 from physion.imaging.Calcium import METHOD, NEUROPIL_CORRECTION_FACTOR, PERCENTILE, ROI_TO_NEUROPIL_INCLUSION_FACTOR, ROI_TO_NEUROPIL_INCLUSION_FACTOR_METRIC, T_SLIDING,\
-        compute_F0, compute_neuropil_factor
+        compute_F0, compute_neuropil_factor, compute_neuropil_factor_allen
 from physion.imaging.dcnv import oasis
 from physion.analysis import tools
-from scipy.stats import zscore
 from scipy.ndimage import gaussian_filter1d
 
 # quantities of shape (nROIs, nTimes), restricted to the valid ROIs by set_valid_roiIndices
@@ -252,16 +251,24 @@ class OphysMixin:
             # then we update the timestamps
             self.t_neuropil = specific_time_sampling
 
-    def build_neuropil_correction_factors(self, **kwargs):
+    def build_neuropil_correction_factors(self, computed_neuropil_fact_method, **kwargs):
         """
         one neuropil correction factor per ROI: self.neuropil_correction_factors
             (slope of the lower envelope of rawFluo vs neuropil,
              see physion.imaging.Calcium.compute_neuropil_factor for the kwargs)
         """
-        self.neuropil_correction_factors = compute_neuropil_factor(self.rawFluo, self.neuropil,
-                                                                   **kwargs)
+        if computed_neuropil_fact_method == 'slope':
+            self.neuropil_correction_factors = compute_neuropil_factor(self.rawFluo, self.neuropil,
+                                                                    **kwargs)
+        elif computed_neuropil_fact_method == 'allen':
+            self.neuropil_correction_factors = compute_neuropil_factor_allen(self.rawFluo, self.neuropil,
+                                                        **kwargs)
+        else:
+            raise ValueError('method "%s" for the neuropil correction factors not recognized (either "slope" or "allen")' %\
+                                computed_neuropil_fact_method)
 
     def build_correctedFluo(self,
+                            specific_time_sampling=None, interpolation='linear',
                             neuropil_correction_factor=NEUROPIL_CORRECTION_FACTOR,
                             verbose=True):
         """
@@ -271,6 +278,16 @@ class OphysMixin:
                                         or an array with one factor per ROI
             (needs self.rawFluo and self.neuropil)
         """
+        self.t_correctedFluo = self.Fluorescence.timestamps[:]
+
+        # we build rawFluo and neuropil if they do not exist already
+        if not hasattr(self, 'rawFluo'):
+            self.build_rawFluo(verbose=verbose, 
+                    specific_time_sampling=specific_time_sampling, interpolation=interpolation)
+        if not hasattr(self, 'neuropil'):
+            self.build_neuropil(verbose=verbose,
+                    specific_time_sampling=specific_time_sampling, interpolation=interpolation)
+
         factor = np.asarray(neuropil_correction_factor, dtype=float)
         if (factor.ndim==0) and not (0<=factor<=1):
             print('[!!] neuropil_correction_factor has to be in the interval [0.,1]')
@@ -310,6 +327,7 @@ class OphysMixin:
 
     def build_dFoF(self,
                    neuropil_correction_factor=NEUROPIL_CORRECTION_FACTOR,
+                   computed_neuropil_fact_method=None,
                    with_computed_neuropil_fact=False,
                    keep_rois_with_neuropil_factor_in=None,
                    method_for_F0=METHOD,
@@ -321,15 +339,17 @@ class OphysMixin:
                    specific_time_sampling=None,
                    interpolation='linear',
                    with_correctedFluo_and_F0=False,
-                   verbose=True):
+                   verbose=False):
         """
         creates self.dFoF = (correctedFluo-F0)/F0 and self.t_dFoF, from the raw data:
 
         1) rawFluo and neuropil, of all ROIs (optionally resampled)
                         -> build_rawFluo, build_neuropil
-        2) neuropil correction factor of each ROI: computed if with_computed_neuropil_fact
+        2) neuropil correction factor of each ROI: computed if computed_neuropil_fact_method
+                is "slope" (lower envelope of rawFluo vs neuropil) or "allen" (Allen Institute)
                         -> build_neuropil_correction_factors
                 otherwise the same "neuropil_correction_factor" for all ROIs
+                (former argument: with_computed_neuropil_fact=True <=> "slope")
         3) correctedFluo = rawFluo - neuropil_correction_factor x neuropil
                 (with the factor of each ROI)
                         -> build_correctedFluo
@@ -360,16 +380,20 @@ class OphysMixin:
                             interpolation=interpolation,
                             verbose=verbose)
         self.t_dFoF = self.t_rawFluo
-
+        
         # 2) neuropil correction factor of each ROI
-        if with_computed_neuropil_fact:
-            self.build_neuropil_correction_factors()
+        if with_computed_neuropil_fact and not computed_neuropil_fact_method:
+            computed_neuropil_fact_method = 'slope'
+        if computed_neuropil_fact_method:
+            self.build_neuropil_correction_factors(computed_neuropil_fact_method)
             if verbose:
                 print('neuropil correction factors computed: %.2f +/- %.2f (min: %.2f, max: %.2f)' %\
                        (np.mean(self.neuropil_correction_factors), np.std(self.neuropil_correction_factors),
                         np.min(self.neuropil_correction_factors), np.max(self.neuropil_correction_factors)))
         else:
             self.neuropil_correction_factors = np.ones(self.nROIs)*neuropil_correction_factor
+            if verbose:
+                print('neuropil correction factor: %.2f (same for all ROIs)' % neuropil_correction_factor)
 
         # 3) neuropil correction
         self.build_correctedFluo(neuropil_correction_factor=self.neuropil_correction_factors,
@@ -410,7 +434,7 @@ class OphysMixin:
         if hasattr(self, quantity): 
 
             self.quantity_Deconvolved = quantity
-            self.t_Deconvolved = self.t_dFoF
+            self.t_Deconvolved = self.t_rawFluo
 
             # time interval of the signal (possibly resampled)
             dt = self.t_Deconvolved[1]-self.t_Deconvolved[0]

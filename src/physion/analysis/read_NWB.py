@@ -192,6 +192,7 @@ class Data(VisualStimMixin, LocomotionMixin, FaceCameraMixin, OptoMixin, OphysMi
                                  self.nwbfile.acquisition[key].timestamps[-1]]
                 except (AttributeError, TypeError, IndexError) as be:
                     safety_counter += 1
+            safety_counter += 1 # (no acquisition: nothing to loop over)
 
         if self.tlim is None:
             self.tlim = [0, 60*60] # 1h by default (~ upper limit) 
@@ -239,9 +240,9 @@ class Data(VisualStimMixin, LocomotionMixin, FaceCameraMixin, OptoMixin, OphysMi
 
         setattr(self, 'Zscore_%s' % quantity,
                 zscore(getattr(self, quantity), axis=-1))
-        #keep same sampling as quantity without Zscore
-        setattr(self, 't_Zscore_%s' % quantity, 
-                getattr(self, 't_%s' % quantity))
+        setattr(self, 't_Zscore_%s' % quantity,
+                getattr(self, 't_%s' % quantity)) # so that it behaves nicely in Episodes
+
 
     def available_modalities(self,
                              verbose=False):
