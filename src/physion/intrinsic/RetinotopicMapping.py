@@ -196,7 +196,7 @@ def labelPatches(patchmap, signMap):
     labeledPatches, patchNum = ni.label(patchmap)
 
     # list of area of every patch, first column: patch label, second column: area
-    patchArea = np.zeros((patchNum, 2), dtype=np.int16)
+    patchArea = np.zeros((patchNum, 2), dtype=np.int64) # int16 overflows for patches > 32767 pixels
 
     for i in range(1, patchNum + 1):
         currPatch = np.zeros(labeledPatches.shape, dtype=np.int16)
@@ -542,7 +542,7 @@ def plotPatchBorders(patches, plotaxis=None, borderWidth=2, color='#ff0000', zoo
         currCenter = currPatch.getCenter()
         if currArea > area:
             center = currCenter
-            area = np.int16(currArea)
+            area = np.int64(currArea)
 
         # print 'currArea:', currArea, '   currCenter:', currCenter, '    center:', center
 

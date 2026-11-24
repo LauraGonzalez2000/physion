@@ -157,7 +157,12 @@ class EpisodeData:
                            'time_start_realigned', 'time_stop',
                            'time_stop_realigned', 'interstim',
                            'protocol-name', 'OptogeneticSeries']:
-                unique = np.sort(np.unique(full_data.nwbfile.stimulus[key].data[self.protocol_cond_in_full_data,0]))
+                data = full_data.nwbfile.stimulus[key].data
+                # only episode parameters: one value per episode, shape (Nepisodes, 1)
+                #   (skips per-frame signals, e.g. "Visual-Stim-Flags", "Visual-Stim-Frames", "Visual-Stim-Square")
+                if (len(data.shape)!=2) or (data.shape[0]!=len(self.protocol_cond_in_full_data)):
+                    continue
+                unique = np.sort(np.unique(data[self.protocol_cond_in_full_data,0]))
                 if len(unique)>1:
                     self.varied_parameters[key] = unique
                 elif len(unique)==1:
